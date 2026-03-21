@@ -1,0 +1,23 @@
+# Nix build results
+result
+result-*
+
+# direnv
+.direnv/
+
+# Editor temp files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets: age-encrypted files ARE safe to commit
+# But never commit unencrypted secret material
+*.key
+*.pem
+!*.age
