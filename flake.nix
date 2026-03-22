@@ -88,10 +88,28 @@
         # Agenix + Disko
         agenix.nixosModules.default
         disko.nixosModules.disko
-
-        # Read machine-local params file (requires --impure)
-        /etc/nixos/params.nix
       ];
+
+      # Machine-local params + hardware config (requires --impure)
+      machineModules =
+        if builtins.pathExists /etc/nixos/params.nix then
+          [ /etc/nixos/params.nix ]
+          ++ (
+            if builtins.pathExists /etc/nixos/hardware-configuration.nix then
+              [ /etc/nixos/hardware-configuration.nix ]
+            else
+              [ ]
+          )
+        else
+          [
+            # CI / pure evaluation fallback: provide dummy params
+            {
+              bauer.params = {
+                hostName = "ci-eval";
+                user.name = "ci";
+              };
+            }
+          ];
 
       # ── Home Manager wiring ─────────────────────────────────────────
       # Dynamically sets home-manager.users.<name> from bauer.params.user
@@ -106,7 +124,7 @@
         templatePath:
         nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
-          modules = baseModules ++ [
+          modules = baseModules ++ machineModules ++ [
             templatePath
             homeManagerModule
           ];
