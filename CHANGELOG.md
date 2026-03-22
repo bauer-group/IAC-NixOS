@@ -1,3 +1,13 @@
+## [1.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.0.0...v1.1.0) (2026-03-22)
+
+### 🚀 Features
+
+* **ci:** add template builds with CI fallback support ([d4326ee](https://github.com/bauer-group/IAC-NixOS/commit/d4326ee22eff17048decd58fe9f16cbee6d04a81))
+
+### ♻️ Refactoring
+
+* **infra:** migrated to template-based config ([d542cca](https://github.com/bauer-group/IAC-NixOS/commit/d542cca70b6ba36cc574c7c336b2692b2aed7de0))
+
 ## [1.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v0.1.0...v1.0.0) (2026-03-22)
 
 ### ⚠ BREAKING CHANGES
