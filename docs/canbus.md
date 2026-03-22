@@ -2,220 +2,178 @@
 
 ## Überblick
 
-Das `embedded-dev.nix` Modul konfiguriert:
-- **Latest stable Kernel** für neueste CAN-Bus Treiber
-- **SocketCAN** Kernel-Module (can, can_raw, can_bcm, can_gw, can_isotp)
-- **USB-Adapter-Treiber** (PEAK, candleLight/canable, Kvaser, etc.)
-- **Virtual CAN** (vcan0, vcan1) für Tests ohne Hardware
-- **Userspace Tools** (can-utils, python-can, cantools)
-- **udev Rules** für automatische Adapter-Erkennung
+Das `embedded-dev`-Feature-Modul (`modules/features/embedded-dev.nix`) konfiguriert:
 
-## SocketCAN Basics
+- **SocketCAN** Kernel-Module (CAN als Linux-Netzwerk-Interface)
+- **USB-Adapter** Treiber (PEAK, candleLight, Kvaser, etc.)
+- **Userspace-Tools** (can-utils, Python-CAN, cantools, UDS)
+- **Embedded-Toolchains** (GCC ARM, OpenOCD, ST-Link, ESP-IDF)
+- **Virtuelle CAN-Interfaces** (vcan0, vcan1 für Tests)
 
-SocketCAN macht CAN-Bus-Interfaces zu normalen Netzwerk-Interfaces:
+## Aktivierung
+
+In der `/etc/nixos/params.nix` auf der Zielmaschine:
+
+```nix
+{ ... }: {
+  bauer.params = {
+    # ...
+    dev.embeddedDev = true;
+  };
+}
+```
+
+Dann deployen mit dem Desktop-Dev Template:
 
 ```bash
-# CAN-Interface anzeigen
-ip link show type can
+sudo nixos-rebuild switch --flake .#desktop-dev --impure
+```
 
-# Virtuelle CAN-Interfaces (automatisch erstellt via systemd)
-ip link show vcan0
-ip link show vcan1
+## USB-Adapter Support
 
-# Physisches CAN-Interface konfigurieren (z.B. PEAK USB)
+| Adapter | Kernel-Modul | USB ID |
+| --- | --- | --- |
+| PEAK-System PCAN-USB | `peak_usb` | `0c72:*` |
+| candleLight / canable | `gs_usb` | `1d50:606f` |
+| Kvaser USB | `kvaser_usb` | `0bfd:*` |
+| USBtin / LAWICEL | `slcan` | (seriell) |
+| EMS CPC-USB | `ems_usb` | |
+| USB2CAN (8 Devices) | `usb_8dev` | |
+| Microchip CAN Analyzer | `mcba_usb` | |
+
+Alle Adapter werden automatisch erkannt. udev-Regeln setzen `MODE=0666` für die `plugdev`-Gruppe.
+
+## can-utils Befehle
+
+```bash
+# ── Empfangen ─────────────────────────────────
+candump can0                          # Alle Frames auf can0
+candump can0,123:7FF                  # Nur ID 0x123
+candump -ta can0                      # Mit absolutem Timestamp
+
+# ── Senden ────────────────────────────────────
+cansend can0 123#DEADBEEF             # Einzelner Frame
+cangen can0 -I 123 -L 8 -g 100       # Generator (100ms Intervall)
+
+# ── Analyse ───────────────────────────────────
+cansniffer can0                       # Live-Anzeige mit Delta
+canbusload can0                       # Busauslastung messen
+
+# ── ISO-TP (Automotive) ──────────────────────
+isotpsend -s 7E0 -d 7E8 can0         # ISO-TP Nachricht senden
+isotprecv -s 7E8 -d 7E0 can0         # ISO-TP Antwort empfangen
+
+# ── Interface konfigurieren ──────────────────
 sudo ip link set can0 type can bitrate 500000
-sudo ip link set can0 up
-
-# Mit FD (Flexible Data-Rate):
-sudo ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
-sudo ip link set can0 up
-
-# Interface-Status
-ip -details link show can0
-```
-
-## USB-Adapter
-
-### Unterstützte Adapter
-
-| Adapter | Kernel-Modul | Anmerkung |
-|---------|-------------|-----------|
-| PEAK PCAN-USB | `peak_usb` | Industriestandard, sehr zuverlässig |
-| candleLight / canable | `gs_usb` | Open-Source Hardware, günstig |
-| Kvaser Leaf Light | `kvaser_usb` | Professionell, gut für Automotive |
-| USBtin / LAWICEL | `slcan` | Serial Line CAN, einfach |
-| Microchip CAN BUS Analyzer | `mcba_usb` | Budget-Option |
-
-### Adapter anschließen
-
-```bash
-# USB-Adapter einstecken, dann prüfen:
-dmesg | tail -20
-# Sollte zeigen: "peak_usb: PCAN-USB ... connected" o.ä.
-
-# CAN-Interface sollte erscheinen:
-ip link show type can
-# → can0
-
-# Konfigurieren und hochfahren
-sudo ip link set can0 type can bitrate 500000
-sudo ip link set can0 up
-```
-
-## can-utils — Wichtigste Befehle
-
-### Empfangen
-
-```bash
-# Alle Frames auf can0 anzeigen
-candump can0
-
-# Mit Timestamps und ASCII-Dekodierung
-candump -ta -c can0
-
-# Nur bestimmte CAN-IDs filtern
-candump can0,123:7FF        # Nur ID 0x123
-candump can0,100:700         # IDs 0x100-0x1FF
-
-# In Logdatei schreiben
-candump -L can0 > trace.log
-```
-
-### Senden
-
-```bash
-# Einzelnen Frame senden (ID#Daten)
-cansend can0 123#DEADBEEF
-
-# CAN-FD Frame
-cansend can0 123##1.DEADBEEFCAFEBABE0011223344556677
-
-# Frame aus Logdatei abspielen
-canplayer -I trace.log
-```
-
-### Generieren & Testen
-
-```bash
-# Zufällige Frames generieren (Last-Test)
-cangen can0 -g 10 -I r -L 8 -D r
-
-# Bus-Statistiken
-canbusload can0@500000
-
-# Sniffer (gruppiert nach ID, zeigt Änderungen)
-cansniffer can0
-```
-
-### ISO-TP (für UDS / Automotive Diagnostik)
-
-```bash
-# ISO-TP Nachricht senden (TX: 0x7E0, RX: 0x7E8)
-echo "10 01" | isotpsend -s 7E0 -d 7E8 can0
-
-# ISO-TP empfangen
-isotprecv -s 7E8 -d 7E0 can0
-
-# UDS DiagnosticSessionControl (Extended Session)
-echo "10 03" | isotpsend -s 7E0 -d 7E8 can0
+sudo ip link set up can0
 ```
 
 ## Python-CAN
 
 ```python
-#!/usr/bin/env python3
 import can
 
-# Bus öffnen
-bus = can.interface.Bus(channel='vcan0', interface='socketcan')
+# CAN-Bus öffnen
+bus = can.Bus(interface='socketcan', channel='can0', bitrate=500000)
 
 # Frame senden
-msg = can.Message(
-    arbitration_id=0x123,
-    data=[0xDE, 0xAD, 0xBE, 0xEF],
-    is_extended_id=False
-)
+msg = can.Message(arbitration_id=0x123, data=[0xDE, 0xAD, 0xBE, 0xEF])
 bus.send(msg)
 
-# Frames empfangen
-for msg in bus:
-    print(f"ID: {msg.arbitration_id:#05x}  Data: {msg.data.hex()}")
+# Frame empfangen
+msg = bus.recv(timeout=1.0)
+print(f"ID: {msg.arbitration_id:#x}, Data: {msg.data.hex()}")
 ```
 
-### DBC-Dateien parsen (cantools)
+### DBC-Datei parsen (cantools)
 
 ```python
 import cantools
 
-# DBC laden
 db = cantools.database.load_file('vehicle.dbc')
+msg = db.get_message_by_name('EngineSpeed')
+data = msg.encode({'RPM': 3500, 'Temperature': 85})
+print(f"Encoded: {data.hex()}")
+```
 
-# Signal dekodieren
-msg = db.get_message_by_name('EngineData')
-decoded = msg.decode(b'\x00\x00\x04\xD2\x00\x00\x00\x00')
-print(decoded)  # {'RPM': 1234, 'Temperature': 0, ...}
+### UDS Diagnostics
 
-# Signal enkodieren
-data = msg.encode({'RPM': 3000, 'Temperature': 85})
-print(data.hex())
+```python
+import udsoncan
+from udsoncan.connections import PythonIsoTpConnection
+from udsoncan.client import Client
+
+conn = PythonIsoTpConnection('can0', rxid=0x7E8, txid=0x7E0)
+with Client(conn) as client:
+    response = client.read_data_by_identifier(0xF190)  # VIN lesen
+    print(response.service_data)
 ```
 
 ## Virtuelle CAN-Interfaces (Testing)
 
-Das Modul erstellt automatisch `vcan0` und `vcan1` via systemd:
+Die Interfaces `vcan0` und `vcan1` werden automatisch beim Boot erstellt:
 
 ```bash
-# Terminal 1: Empfangen
-candump vcan0
+# Prüfen
+ip link show type vcan
 
-# Terminal 2: Senden
-cansend vcan0 123#CAFEBABE
+# Loopback-Test
+candump vcan0 &
+cansend vcan0 123#AABBCCDD
+# → Empfängt den eigenen Frame
 
-# vxcan: Tunnel zwischen zwei vcan Interfaces
-sudo ip link add dev vxcan0 type vxcan peer name vxcan1
-sudo ip link set up vxcan0
-sudo ip link set up vxcan1
-# Was auf vxcan0 gesendet wird, erscheint auf vxcan1 und umgekehrt
-```
-
-## Kernel-Version prüfen
-
-```bash
-# Aktuelle Kernel-Version
-uname -r
-# Sollte z.B. 6.12.x oder neuer sein
-
-# CAN-Module geladen?
-lsmod | grep can
-# Sollte zeigen: can, can_raw, can_bcm, vcan, etc.
-
-# CAN-Subsystem im Kernel?
-cat /proc/net/can/version
-
-# Verfügbare CAN-bezogene Module
-find /lib/modules/$(uname -r) -name '*can*'
+# Zwei Terminals verbinden
+# Terminal 1: candump vcan0
+# Terminal 2: cansend vcan0 456#11223344
 ```
 
 ## Troubleshooting
 
-### "RTNETLINK answers: Operation not supported"
-→ CAN-Kernel-Module nicht geladen. Prüfe `lsmod | grep can`.
-→ Evtl. `sudo modprobe can` / `sudo modprobe can_raw`.
+### "RTNETLINK: Operation not supported"
+
+```bash
+# CAN-Kernel-Module laden
+sudo modprobe can
+sudo modprobe can_raw
+sudo modprobe vcan
+
+# Prüfen ob geladen
+lsmod | grep can
+```
 
 ### USB-Adapter wird nicht erkannt
-→ `dmesg | grep -i can` prüfen
-→ `lsusb` prüfen ob Adapter aufgelistet wird
-→ udev Rules checken: `udevadm info /dev/bus/usb/...`
 
-### "Cannot find device can0"
-→ Adapter angeschlossen? `ip link show type can`
-→ Richtiger Treiber? `dmesg | tail -30`
+```bash
+# USB-Geräte auflisten
+lsusb
 
-### Bus-Off / Error-Passive
-→ Falsche Bitrate? Muss auf allen Teilnehmern gleich sein
-→ Terminierung? CAN-Bus braucht 120Ω Terminierung an beiden Enden
-→ `ip -details -statistics link show can0` für Error-Counter
+# Kernel-Logs prüfen
+dmesg | grep -i can
 
-### CAN-FD Frames werden nicht empfangen
-→ `ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on`
-→ Adapter muss CAN-FD unterstützen (PEAK PCAN-USB FD, canable Pro)
+# Treiber manuell laden
+sudo modprobe peak_usb   # PEAK
+sudo modprobe gs_usb     # candleLight
+```
+
+### Bus-Off Recovery
+
+```bash
+# Interface zurücksetzen
+sudo ip link set can0 down
+sudo ip link set can0 type can restart-ms 100
+sudo ip link set can0 up
+
+# Statistiken prüfen
+ip -details -statistics link show can0
+```
+
+### CAN-FD (Flexible Data-Rate)
+
+```bash
+# Interface mit CAN-FD konfigurieren
+sudo ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
+sudo ip link set can0 up
+
+# FD-Frames senden (bis 64 Byte)
+cansend can0 123##1.DEADBEEFCAFEBABE
+```

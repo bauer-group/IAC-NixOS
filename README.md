@@ -1,109 +1,113 @@
 # BAUER GROUP — NixOS Infrastructure
 
-Deklarative, reproduzierbare Infrastruktur für BAUER GROUP.  
-Ein Flake, alle Maschinen — Desktop, Production Server, Embedded Dev.
+Parametrische NixOS-Templates für die gesamte Infrastruktur.
+Drei Templates, eine Parameterdatei pro Maschine — fertig.
+
+## Templates
+
+| Template | Befehl | Beschreibung |
+|----------|--------|-------------|
+| `desktop-dev` | `nixos-rebuild switch --flake .#desktop-dev --impure` | Entwickler-Desktop (KDE Plasma 6, Dev-Tools, optional CAN-Bus) |
+| `desktop-kiosk` | `nixos-rebuild switch --flake .#desktop-kiosk --impure` | Kiosk-Display (Fullscreen-Browser + Docker-Backend) |
+| `server` | `nixos-rebuild switch --flake .#server --impure` | Headless Server (Docker-Services, gehärtet, Monitoring) |
 
 ## Quickstart
 
 ```bash
-# 1. Clone
-git clone <this-repo> ~/bauer-nix && cd ~/bauer-nix
+# 1. Repo klonen
+git clone git@github.com:bauer-group/nixos.git
+cd nixos
 
-# 2. Desktop lokal deployen (nach NixOS-Installation)
-sudo nixos-rebuild switch --flake .#karl-desktop
+# 2. Hardware-Konfiguration generieren (auf der Zielmaschine)
+nixos-generate-config --show-hardware-config > /etc/nixos/hardware-configuration.nix
 
-# 3. Production Server deployen (remote via Colmena)
-nix develop          # Dev Shell mit allen Tools
-colmena apply --on @production
+# 3. Parameterdatei erstellen
+cp params.example.nix /etc/nixos/params.nix
+vim /etc/nixos/params.nix    # Werte anpassen
 
-# 4. Einzelnen Server deployen
-colmena apply --on prod-server-01
-# oder direkt:
-nixos-rebuild switch --flake .#prod-server-01 \
-  --target-host root@10.0.0.1 --build-host localhost
+# 4. Template deployen
+sudo nixos-rebuild switch --flake .#server --impure
 ```
 
-## Repo-Struktur
+## Struktur
 
 ```
-bauer-nix/
-├── flake.nix                          # Entry Point — alle Inputs & Outputs
-├── flake.lock                         # Gelockte Dependency-Versionen
+├── templates/                     # NixOS-Konfigurationsprofile
+│   ├── desktop-dev.nix            #   Entwickler-Desktop
+│   ├── desktop-kiosk.nix          #   Kiosk-Display
+│   └── server.nix                 #   Headless Server
 │
 ├── modules/
-│   ├── baseline/                      # Globale Defaults (alle Maschinen)
-│   │   ├── ntp.nix                    #   Chrony + PTB Zeitserver
-│   │   ├── ssh.nix                    #   Gehärteter SSH (Key-only, Ed25519)
-│   │   ├── users.nix                  #   User Accounts + sudo
-│   │   ├── networking.nix             #   Firewall, DNS, BBR, Sysctl
-│   │   └── nix.nix                    #   Flakes, Caches, GC, System Packages
-│   │
-│   ├── roles/                         # Rollen (komponieren Baselines)
-│   │   ├── server.nix                 #   Production: Baselines + Fail2ban + Audit
-│   │   ├── desktop-dev.nix            #   Desktop: Server + GUI + Dev Tools
-│   │   └── embedded-dev.nix           #   Embedded: Latest Kernel + CAN-Bus + Toolchains
-│   │
-│   └── services/                      # Opt-in Services
-│       ├── docker.nix                 #   Docker Engine + Compose + Prune
-│       └── outline.nix                #   Outline Wiki (Docker Compose wrapper)
+│   ├── params.nix                 # Parametertypen + Validierung
+│   ├── baseline/                  # Geteilte Grundkonfiguration
+│   │   ├── networking.nix         #   Firewall, DNS, IP (aus params)
+│   │   ├── nix.nix                #   Flakes, Caches, GC
+│   │   ├── ntp.nix                #   Chrony + PTB Zeitserver
+│   │   ├── ssh.nix                #   Gehärtetes SSH (Ed25519-only)
+│   │   └── users.nix              #   User-Accounts (aus params)
+│   ├── features/                  # Opt-in Feature-Module
+│   │   └── embedded-dev.nix       #   CAN-Bus / SocketCAN
+│   └── services/                  # Opt-in Services (mkOption)
+│       ├── docker.nix             #   Docker Engine
+│       ├── monitoring.nix         #   Prometheus + Grafana
+│       └── backup.nix             #   Restic Backup
 │
-├── hosts/                             # Host-spezifische Konfiguration
-│   ├── karl-desktop/
-│   │   ├── default.nix                #   Hostname, Boot, GPU, Overrides
-│   │   └── hardware-configuration.nix #   Hardware (von nixos-generate-config)
-│   ├── prod-server-01/
-│   │   └── default.nix
-│   └── prod-server-02/
-│       └── default.nix
+├── home/                          # Home Manager (User-Dotfiles)
+│   ├── common.nix                 #   Git, Zsh, Starship, Direnv
+│   └── user.nix                   #   Parametrische User-Config
 │
-├── home/                              # Home Manager (User-Level Config)
-│   ├── common.nix                     #   Git, Zsh, Starship, Direnv, Aliases
-│   └── karl.nix                       #   Karls persönliche Config
-│
-└── docs/                              # Dokumentation
-    ├── getting-started.md
-    ├── adding-hosts.md
-    ├── deployment.md
-    ├── canbus.md
-    ├── secrets.md
-    └── troubleshooting.md
+├── overlays/                      # Nix Overlays
+├── tests/                         # NixOS VM-Integrationstests
+├── scripts/health-check.sh        # Post-Deployment Prüfung
+├── secrets/                       # agenix Secrets-Verwaltung
+├── params.example.nix             # Referenz-Parameterdatei
+└── docs/                          # Dokumentation
 ```
 
-## Architektur-Prinzipien
-
-### Modulare Vererbung
+## Architektur
 
 ```
-baseline/*  →  roles/server.nix  →  roles/desktop-dev.nix
-                                  →  roles/embedded-dev.nix
+/etc/nixos/params.nix (Werte)     params.example.nix (Referenz)
+         │                                  │
+         ▼                                  ▼
+┌─ modules/params.nix ─────────────────────────┐
+│  bauer.params.hostName, .user, .network, ... │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+┌─ templates/*.nix ────────────────────────────┐
+│  desktop-dev │ desktop-kiosk │ server        │
+│  ┌───────────────────────────────────────┐   │
+│  │ modules/baseline/* (SSH, NTP, FW, ...) │   │
+│  │ modules/services/* (Docker, Backup)    │   │
+│  │ modules/features/* (CAN-Bus)           │   │
+│  │ home/user.nix (Zsh, Git, Neovim)       │   │
+│  └───────────────────────────────────────┘   │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+    nixos-rebuild switch --flake .#template --impure
 ```
 
-- **Baseline-Module** setzen Defaults via `lib.mkDefault` → jeder Host kann overriden
-- **Rollen** komponieren Baselines + fügen rollenspezifische Config hinzu
-- **Services** sind opt-in Module, die per Host zugeschaltet werden
-- **Hosts** definieren Hardware, Netzwerk, und wählen Rollen/Services
+## Dokumentation
 
-### Kernel-Strategie
+| Dokument | Inhalt |
+|----------|--------|
+| [Erste Schritte](docs/getting-started.md) | Installation, erste Maschine einrichten |
+| [Maschine hinzufügen](docs/adding-machines.md) | Neue Maschine mit Template provisionieren |
+| [Deployment](docs/deployment.md) | Deployment-Methoden und Workflows |
+| [Secrets](docs/secrets.md) | agenix Setup, Secrets erstellen und rotieren |
+| [CAN-Bus](docs/canbus.md) | SocketCAN, USB-Adapter, can-utils |
+| [Troubleshooting](docs/troubleshooting.md) | Häufige Fehler und Lösungen |
 
-| Rolle | Kernel | Grund |
-|-------|--------|-------|
-| `server.nix` | LTS (`linuxPackages`) | Stabilität, ZFS-Kompatibilität |
-| `desktop-dev.nix` | LTS (erbt von server) | Stabilität |
-| `embedded-dev.nix` | Latest (`linuxPackages_latest`) | Neueste CAN-Bus Treiber |
+## Code-Qualität
 
-### Override-Hierarchie
-
+```bash
+nix develop          # Dev-Shell mit allen Tools + Pre-Commit Hooks
+nix fmt              # Formatierung (nixfmt, prettier, shfmt, yamlfmt)
+nix flake check      # Linting (statix, deadnix) + Formatierung
 ```
-lib.mkDefault (schwächster)  →  normaler Wert  →  lib.mkForce (stärkster)
-```
 
-Baseline setzt `mkDefault`, Rollen setzen normale Werte, Hosts nutzen `mkForce` nur wenn nötig.
+## Lizenz
 
-## Nächste Schritte
-
-1. [Getting Started](docs/getting-started.md) — NixOS installieren & erste Config
-2. [Adding Hosts](docs/adding-hosts.md) — Neuen Server/Desktop hinzufügen
-3. [Deployment](docs/deployment.md) — Colmena, nixos-rebuild, nixos-anywhere
-4. [CAN-Bus Development](docs/canbus.md) — SocketCAN Setup & Tooling
-5. [Secrets Management](docs/secrets.md) — agenix für Passwörter & Keys
-6. [Troubleshooting](docs/troubleshooting.md) — Häufige Probleme & Lösungen
+MIT — BAUER GROUP

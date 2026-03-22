@@ -4,44 +4,63 @@
 
 ### "error: attribute 'XXX' missing"
 
-**Ursache:** Modul erwartet ein Argument, das nicht übergeben wird.
+Ein Paket oder Option existiert nicht in der aktuellen nixpkgs-Version.
 
 ```bash
-# Prüfe, ob alle Inputs korrekt weitergereicht werden:
-nix flake check
+# Option im NixOS-Search suchen
+# https://search.nixos.org/options
+
+# Oder im REPL prüfen
+nix repl
+:lf .
+nixosConfigurations.server.config.services.XXX
 ```
 
 ### "error: infinite recursion encountered"
 
-**Ursache:** Zirkuläre Abhängigkeit in der Config.
-Häufig durch `config.XXX` in einer Option, die von sich selbst abhängt.
+Zwei Module setzen denselben Wert ohne `mkDefault` / `mkForce`:
 
 ```bash
-# Debuggen: Welche Option verursacht es?
-nix eval .#nixosConfigurations.hostname.config.XXX --show-trace 2>&1 | head -50
+# Trace aktivieren
+nixos-rebuild build --flake .#server --impure --show-trace 2>&1 | head -100
 ```
 
 ### "hash mismatch in fixed-output derivation"
 
-**Ursache:** Upstream-Quelle hat sich geändert.
+Ein Paket-Hash stimmt nicht (z.B. nach nixpkgs-Update):
 
 ```bash
-# Flake-Lock updaten
-nix flake update
-# Dann neu bauen
+# Nix Store reparieren
+sudo nix-store --verify --repair
+
+# Oder: betroffenes Paket löschen und neu bauen
+nix-store --delete /nix/store/HASH-paketname
 ```
 
-### Build bricht mit OOM ab
+### "error: getting status of '/etc/nixos/params.nix': No such file"
+
+Das `--impure` Flag fehlt oder die `params.nix` existiert nicht:
 
 ```bash
-# Weniger parallele Builds
-NIX_BUILD_CORES=2 nixos-rebuild switch --flake .#hostname
+# Prüfe ob die Datei existiert
+ls -la /etc/nixos/params.nix
 
-# Oder Swap temporär aktivieren
-sudo fallocate -l 4G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
+# Falls nicht: Vorlage kopieren
+cp params.example.nix /etc/nixos/params.nix
+vim /etc/nixos/params.nix
+
+# Build mit --impure
+sudo nixos-rebuild switch --flake .#server --impure
+```
+
+### "error: The option 'bauer.params.hostName' is used but not defined"
+
+Die `params.nix` setzt nicht alle Pflichtfelder:
+
+```bash
+# Pflichtfelder prüfen
+# Mindestens: hostName und user.name müssen gesetzt sein
+cat /etc/nixos/params.nix
 ```
 
 ## Deployment-Fehler
@@ -49,158 +68,170 @@ sudo swapon /swapfile
 ### "Permission denied (publickey)"
 
 ```bash
-# SSH-Verbindung testen
-ssh -v root@10.0.0.1
+# SSH-Key auf der Zielmaschine prüfen
+ssh -v root@ZIEL_IP
 
-# Key auf Server autorisiert?
-# In modules/baseline/users.nix → openssh.authorizedKeys.keys
+# SSH-Key muss in params.nix eingetragen sein:
+# bauer.params.user.sshKeys = [ "ssh-ed25519 AAAA..." ];
+
+# Oder: Initial-Passwort setzen (temporär)
+# bauer.params.user.hashedPassword = "...";
 ```
 
-### "error: the option does not exist"
+### "The option 'XXX' does not exist"
 
-**Ursache:** NixOS-Version-Mismatch. Option existiert in der Ziel-Nixpkgs-Version nicht.
+Template-Option wird nicht vom gewählten Template unterstützt:
 
 ```bash
-# Prüfe Nixpkgs-Version im Lock
-nix flake metadata | grep nixpkgs
+# Verfügbare Optionen anzeigen
+nixos-option bauer.params
+nixos-option bauer.services
 
-# Option suchen
-nix search nixpkgs#nixosModules services.XXX
-# Oder: https://search.nixos.org/options
+# Template prüfen: welches Template passt?
+# desktop-dev:   bauer.params.dev.*
+# desktop-kiosk: bauer.params.kiosk.*
+# server:        bauer.params.server.*
 ```
 
-### Colmena: "Host unreachable"
+### Docker Compose Service startet nicht
 
 ```bash
-# Einzeln testen
-ssh root@10.0.0.1 echo ok
+# Service-Status prüfen
+systemctl status compose-webapp
 
-# Nur erreichbare Hosts deployen
-colmena apply --on @production 2>&1 | grep -v unreachable
+# Logs anzeigen
+journalctl -u compose-webapp -f
+
+# Docker-Compose direkt testen
+cd /opt/webapp
+docker-compose up
+
+# Häufige Ursachen:
+# 1. docker-compose.yml fehlt im Verzeichnis
+# 2. .env Datei fehlt oder falsche Berechtigungen
+# 3. Docker-Images nicht verfügbar (Netzwerk?)
 ```
 
 ## System-Probleme
 
-### System bootet nicht nach Rebuild
-
-1. Im Boot-Menü eine **vorherige Generation** wählen
-2. Danach: `sudo nixos-rebuild switch --rollback`
-3. Problem in der Config fixen und neu deployen
-
-### "A stop job is running for..." (hängt beim Shutdown)
+### Boot-Fehler
 
 ```bash
-# Welcher Service hängt?
+# Im GRUB/systemd-boot Menü: ältere Generation auswählen
+# Dann die fehlerhafte Config reparieren und neu deployen
+
+# Oder: von USB-Stick booten und chroot
+sudo mount /dev/sda2 /mnt
+sudo mount /dev/sda1 /mnt/boot
+sudo nixos-enter --root /mnt
+nixos-rebuild switch --rollback
+```
+
+### Shutdown hängt (Service stoppt nicht)
+
+```bash
+# Hängenden Service identifizieren
 systemctl list-jobs
 
-# Timeout verkürzen (temporär)
-sudo systemctl stop <service-name> --force
+# Service forcieren
+sudo systemctl stop SERVICENAME --force
+
+# Default-Timeout verkürzen (in params.nix oder Template)
+# systemd.extraConfig = "DefaultTimeoutStopSec=30s";
 ```
 
-### Disk voll (Nix Store)
+### Disk voll
 
 ```bash
-# Sofort aufräumen
+# Nix Garbage Collection
 sudo nix-collect-garbage -d
 
-# Nur Generationen älter als 7 Tage löschen
+# Alte Generationen löschen (älter als 7 Tage)
 sudo nix-collect-garbage --delete-older-than 7d
 
-# Store optimieren (Deduplizierung)
+# Store optimieren (Hardlinks für identische Dateien)
 sudo nix-store --optimise
 
-# Prüfe Disk-Usage
-du -sh /nix/store | sort -h | tail -20
-nix path-info --size --closure-size /run/current-system | sort -k2 -n
+# Docker aufräumen
+sudo docker system prune -a --volumes
 ```
 
-### Package nicht gefunden
+### Paket nicht gefunden
 
 ```bash
-# In Nixpkgs suchen
-nix search nixpkgs paketname
+# In nixpkgs suchen
+nix search nixpkgs packagename
 
-# Oder online: https://search.nixos.org/packages
+# Unstable-Kanal verwenden (in Nix-Modulen)
+# pkgs.unstable.packagename
 
-# Paket aus unstable Channel nutzen (wenn in stable nicht vorhanden)
-# In Config: pkgs.unstable.paketname (dank Overlay in flake.nix)
+# Temporär in nix-shell testen
+nix shell nixpkgs#packagename
 ```
 
-## Kernel / Hardware
+## Monitoring-Probleme
 
-### Kernel-Modul fehlt
+### Node Exporter antwortet nicht
 
 ```bash
-# Prüfe ob Modul verfügbar
-find /lib/modules/$(uname -r) -name '*.ko*' | grep modulname
+# Service prüfen
+systemctl status prometheus-node-exporter
 
-# Manuell laden
-sudo modprobe modulname
+# Port prüfen
+ss -tlnp | grep 9100
 
-# Permanent in Config:
-# boot.kernelModules = [ "modulname" ];
+# Firewall prüfen (Port 9100 muss offen sein)
+sudo iptables -L INPUT -n | grep 9100
 ```
 
-### Latest Kernel bricht ZFS
-
-ZFS unterstützt oft nicht den allerneuesten Kernel.
+### Grafana nicht erreichbar
 
 ```bash
-# Lösung: ZFS-kompatiblen Kernel nutzen
-boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+# Service prüfen
+systemctl status grafana
+
+# Default-Port: 3100
+curl http://localhost:3100/api/health
 ```
 
-### Kernel-Config prüfen
+## Nix Debugging
+
+### REPL verwenden
 
 ```bash
-# Aktuelle Kernel-Config
-zcat /proc/config.gz | grep CAN
-# oder
-cat /boot/config-$(uname -r) | grep CAN
-```
-
-## Nix Sprache / Debugging
-
-### Config interaktiv inspizieren
-
-```bash
-# REPL starten
 nix repl
+:lf .                                    # Flake laden
 
-# Flake laden
-:lf .
-
-# Config eines Hosts inspizieren
-nixosConfigurations.karl-desktop.config.boot.kernelPackages.kernel.version
-nixosConfigurations.karl-desktop.config.services.openssh.enable
-nixosConfigurations.karl-desktop.config.environment.systemPackages
-
-# Alle NTP-Settings
-nixosConfigurations.karl-desktop.config.services.chrony
+# Konfiguration inspizieren (ohne --impure nicht möglich für Templates)
+# Stattdessen: einzelne Module testen
+:e ./modules/params.nix                  # Datei im Editor öffnen
+builtins.attrNames (import ./overlays { nixpkgs-unstable = inputs.nixpkgs-unstable; })
 ```
 
-### Welches Modul setzt eine Option?
+### Optionen suchen
 
 ```bash
-# Trace anzeigen
-nixos-option --flake .#karl-desktop services.chrony.servers
+# Welche Optionen sind verfügbar?
+nixos-option bauer.params
+nixos-option bauer.params.user
+nixos-option bauer.services.docker
 
-# Oder in REPL:
-:lf .
-nixosConfigurations.karl-desktop.options.services.chrony.servers.definitionsWithLocations
+# Online: https://search.nixos.org/options
 ```
 
-### Diff zwischen zwei Generationen
+### Build-Unterschiede anzeigen
 
 ```bash
-# Welche Pakete haben sich geändert?
-nix store diff-closures /nix/var/nix/profiles/system-{100,101}-link
+# Vor und nach einer Änderung vergleichen
+nixos-rebuild build --flake .#server --impure
+nix-diff /run/current-system ./result
 ```
 
 ## Nützliche Links
 
-- NixOS Options Search: https://search.nixos.org/options
-- Nixpkgs Packages: https://search.nixos.org/packages
-- NixOS & Flakes Book: https://nixos-and-flakes.thiscute.world/
-- NixOS Wiki: https://wiki.nixos.org/
-- Nix Pills (Deep Dive): https://nixos.org/guides/nix-pills/
+- [NixOS Options Search](https://search.nixos.org/options)
+- [NixOS Packages Search](https://search.nixos.org/packages)
+- [NixOS Wiki](https://wiki.nixos.org)
+- [Nix Pills (Tutorial)](https://nixos.org/guides/nix-pills/)
+- [agenix Dokumentation](https://github.com/ryantm/agenix)
+- [Home Manager Options](https://nix-community.github.io/home-manager/options.html)

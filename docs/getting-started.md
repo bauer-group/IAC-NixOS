@@ -3,154 +3,255 @@
 ## Voraussetzungen
 
 - Ein x86_64-Rechner (physisch oder VM)
-- USB-Stick (≥4 GB) für die Installation
-- Grundlegende Linux-Kenntnisse
+- NixOS 25.11 Installations-ISO ([Download](https://nixos.org/download))
+- USB-Stick (mind. 4 GB) oder VM-Setup
+- Internetzugang auf der Zielmaschine
 
-## 1. NixOS installieren
+## Schritt 1: NixOS installieren
 
-### ISO herunterladen
+1. NixOS-ISO auf USB-Stick schreiben:
+
+   ```bash
+   # Linux/macOS
+   sudo dd if=nixos-minimal.iso of=/dev/sdX bs=4M status=progress
+
+   # Windows: Rufus oder balenaEtcher verwenden
+   ```
+
+2. Vom USB-Stick booten und das Netzwerk einrichten:
+
+   ```bash
+   # WLAN (falls nötig)
+   sudo systemctl start wpa_supplicant
+   wpa_cli
+   > add_network
+   > set_network 0 ssid "SSID"
+   > set_network 0 psk "Passwort"
+   > enable_network 0
+
+   # Prüfen
+   ip a
+   ping nixos.org
+   ```
+
+3. Partitionieren und Basis-Installation:
+
+   ```bash
+   # Beispiel: EFI + ext4
+   sudo parted /dev/sda -- mklabel gpt
+   sudo parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB
+   sudo parted /dev/sda -- set 1 esp on
+   sudo parted /dev/sda -- mkpart primary ext4 512MiB 100%
+
+   sudo mkfs.fat -F32 /dev/sda1
+   sudo mkfs.ext4 /dev/sda2
+
+   sudo mount /dev/sda2 /mnt
+   sudo mkdir -p /mnt/boot
+   sudo mount /dev/sda1 /mnt/boot
+
+   # Basis-Config generieren
+   sudo nixos-generate-config --root /mnt
+   ```
+
+## Schritt 2: Hardware-Konfiguration sichern
+
+Die Hardware-Konfiguration wird automatisch generiert und beschreibt CPU, Disks, Kernel-Module etc. für diese spezifische Maschine:
 
 ```bash
-# Aktuelles ISO (Plasma Desktop — für graphische Installation)
-wget https://channels.nixos.org/nixos-25.11/latest-nixos-plasma6-x86_64-linux.iso
+# Anzeigen (zur Prüfung)
+cat /mnt/etc/nixos/hardware-configuration.nix
 
-# Auf USB-Stick schreiben
-sudo dd bs=4M conv=fsync oflag=direct status=progress \
-  if=latest-nixos-plasma6-x86_64-linux.iso of=/dev/sdX
+# Diese Datei bleibt auf der Maschine unter /etc/nixos/
+# Sie wird NICHT ins Git-Repo committet.
 ```
 
-### Installation durchführen
+**Wichtig:** Die `hardware-configuration.nix` ist maschinenspezifisch und gehört auf die Maschine, nicht ins Repo. Sie wird bei jedem `nixos-generate-config` neu erzeugt.
 
-1. Vom USB-Stick booten
-2. Graphischen Installer starten (oder manuell via CLI)
-3. Partitionierung wählen (EFI + Root, optional Swap)
-4. Installation abschließen, reboot
+## Schritt 3: Parameterdatei erstellen
 
-### Nach der Installation: Flakes aktivieren
+Jede Maschine braucht eine `/etc/nixos/params.nix` die das Template parametrisiert.
 
 ```bash
-# Temporär Flakes aktivieren
-export NIX_CONFIG="experimental-features = nix-command flakes"
+# Repo klonen (auf einem anderen Rechner oder nach der Installation)
+git clone git@github.com:bauer-group/nixos.git
+cd nixos
 
-# Git installieren (wird für Flakes benötigt)
-nix-env -iA nixos.git
+# Beispiel-Parameterdatei als Vorlage kopieren
+cp params.example.nix /mnt/etc/nixos/params.nix
+
+# Bearbeiten — mindestens hostName und user.sshKeys setzen!
+vim /mnt/etc/nixos/params.nix
 ```
 
-## 2. Dieses Repo einrichten
+### Minimale params.nix für einen Server
 
-```bash
-# Repo clonen
-git clone <repo-url> ~/bauer-nix
-cd ~/bauer-nix
+```nix
+{ ... }: {
+  bauer.params = {
+    hostName = "srv-prod-01";
 
-# Hardware-Config generieren und einfügen
-nixos-generate-config --show-hardware-config > hosts/karl-desktop/hardware-configuration.nix
+    user = {
+      name = "admin";
+      fullName = "BAUER Admin";
+      email = "admin@bauer-group.com";
+      sshKeys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... admin@workstation"
+      ];
+    };
+
+    network = {
+      useDHCP = false;
+      interface = "eth0";
+      address = "10.0.0.5";
+      prefixLength = 24;
+      gateway = "10.0.0.1";
+      nameservers = [ "1.1.1.1" "8.8.8.8" ];
+      openPorts = [ 80 443 ];
+    };
+
+    boot.loader = "grub";
+    boot.grubDevice = "/dev/sda";
+
+    server = {
+      composeProjects = {
+        webapp = { directory = "/opt/webapp"; };
+      };
+    };
+  };
+}
 ```
 
-### Anpassen
+### Minimale params.nix für einen Desktop
 
-1. **`hosts/karl-desktop/hardware-configuration.nix`** — wurde gerade generiert
-2. **`hosts/karl-desktop/default.nix`** — Boot-Loader, GPU, Netzwerk prüfen
-3. **`home/karl.nix`** — Git-Name, E-Mail, SSH-Keys eintragen
-4. **`modules/baseline/users.nix`** — SSH Public Key eintragen
+```nix
+{ ... }: {
+  bauer.params = {
+    hostName = "dev-workstation-01";
 
-## 3. Erstes Deployment
+    user = {
+      name = "karl";
+      fullName = "Karl Bauer";
+      email = "karl@bauer-group.com";
+      sshKeys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... karl@desktop"
+      ];
+      hashedPassword = "$6$rounds=100000$...";  # mkpasswd -m sha-512
+    };
 
-```bash
-cd ~/bauer-nix
-
-# Erst nur bauen (ohne zu aktivieren) — prüft auf Fehler
-nixos-rebuild build --flake .#karl-desktop
-
-# Wenn erfolgreich: aktivieren
-sudo nixos-rebuild switch --flake .#karl-desktop
+    network.useDHCP = true;
+    dev.embeddedDev = true;  # CAN-Bus Tooling aktivieren
+  };
+}
 ```
 
-Nach dem Reboot läuft dein System komplett aus der deklarativen Config.
+### Minimale params.nix für einen Kiosk
 
-## 4. Workflow im Alltag
+```nix
+{ ... }: {
+  bauer.params = {
+    hostName = "kiosk-lobby-01";
 
-### Änderungen machen
+    user = {
+      name = "kiosk";
+      sshKeys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... admin@workstation"
+      ];
+    };
+
+    network.useDHCP = true;
+
+    kiosk = {
+      url = "http://localhost:3000";
+      composeFile = /opt/kiosk/docker-compose.yml;
+      touchscreen = true;
+    };
+  };
+}
+```
+
+## Schritt 4: Erstes Deployment
 
 ```bash
-# Config editieren
-vim modules/roles/desktop-dev.nix
+# Von der Zielmaschine aus (nach Installation und Reboot)
+cd /pfad/zum/nixos-repo
 
-# Testen (aktiviert, aber kein Boot-Eintrag)
-sudo nixos-rebuild test --flake .#karl-desktop
+# Template wählen und deployen
+sudo nixos-rebuild switch --flake .#server --impure
 
-# Wenn gut: permanent aktivieren
-sudo nixos-rebuild switch --flake .#karl-desktop
+# Oder für Desktop:
+sudo nixos-rebuild switch --flake .#desktop-dev --impure
 
-# Committen
-git add -A && git commit -m "feat: add package X to desktop"
+# Oder für Kiosk:
+sudo nixos-rebuild switch --flake .#desktop-kiosk --impure
+```
+
+**Das `--impure` Flag ist nötig**, damit NixOS die lokale `/etc/nixos/params.nix` lesen kann. Ohne `--impure` schlägt der Build fehl.
+
+## Schritt 5: Täglicher Workflow
+
+### Änderungen testen
+
+```bash
+# Ohne Reboot testen (wird beim nächsten Reboot zurückgesetzt)
+sudo nixos-rebuild test --flake .#server --impure
+
+# Dauerhaft anwenden
+sudo nixos-rebuild switch --flake .#server --impure
 ```
 
 ### Rollback
 
 ```bash
-# Vorherige Generation booten (im Boot-Menü oder):
-sudo nixos-rebuild switch --rollback
+# Im Boot-Menü: ältere Generation auswählen
 
-# Alle Generationen anzeigen
-nix profile history --profile /nix/var/nix/profiles/system
+# Oder via CLI
+sudo nixos-rebuild switch --rollback
 ```
 
 ### Updates
 
 ```bash
-# Alle Flake-Inputs updaten (nixpkgs, home-manager, etc.)
+# Flake-Inputs aktualisieren (nixpkgs, home-manager, etc.)
 nix flake update
 
-# Nur nixpkgs updaten
-nix flake update nixpkgs
-
-# Danach neu bauen
-sudo nixos-rebuild switch --flake .#karl-desktop
-
-# Commit lock file
-git add flake.lock && git commit -m "chore: update flake inputs"
+# Dann neu deployen
+sudo nixos-rebuild switch --flake .#server --impure
 ```
 
-## 5. Nix Shell für Projekte
-
-Statt global Pakete zu installieren, nutze projektspezifische Shells:
+### Parameter ändern
 
 ```bash
-# Temporäre Shell mit bestimmten Paketen
-nix shell nixpkgs#nodejs_22 nixpkgs#pnpm
+# Einfach die params.nix auf der Maschine bearbeiten
+sudo vim /etc/nixos/params.nix
 
-# Oder: flake.nix im Projektordner
-# Dann reicht `nix develop` oder automatisch via direnv
+# Und neu deployen
+sudo nixos-rebuild switch --flake .#server --impure
 ```
 
-### Beispiel: `flake.nix` für ein Node.js-Projekt
+## Cheat Sheet
 
-```nix
-{
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
-  outputs = { nixpkgs, ... }:
-    let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    in {
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        packages = with pkgs; [ nodejs_22 nodePackages.pnpm ];
-      };
-    };
-}
+```bash
+# ── Deployment ────────────────────────────────
+nixos-rebuild switch --flake .#server --impure     # Server deployen
+nixos-rebuild switch --flake .#desktop-dev --impure # Desktop deployen
+nixos-rebuild test --flake .#server --impure        # Testen ohne Commit
+nixos-rebuild switch --rollback                     # Letzte Generation
+
+# ── Nix ───────────────────────────────────────
+nix flake update                    # Inputs aktualisieren
+nix flake check                     # Linting + Formatting prüfen
+nix fmt                             # Code formatieren
+nix develop                         # Dev-Shell betreten
+
+# ── System ────────────────────────────────────
+nixos-version                       # Aktuelle Version
+nixos-generate-config               # Hardware-Config neu generieren
+nix-store --gc                      # Speicher freigeben
+nix-store --optimise                # Store deduplizieren
+
+# ── Diagnose ──────────────────────────────────
+systemctl --failed                  # Fehlgeschlagene Services
+journalctl -xe                      # Letzte Logs
+nixos-option bauer.params           # Parameter-Optionen anzeigen
 ```
-
-## Wichtige Befehle — Cheat Sheet
-
-| Befehl | Beschreibung |
-|--------|-------------|
-| `sudo nixos-rebuild switch --flake .#host` | Config aktivieren |
-| `sudo nixos-rebuild test --flake .#host` | Config testen (kein Boot-Eintrag) |
-| `sudo nixos-rebuild build --flake .#host` | Nur bauen |
-| `sudo nixos-rebuild switch --rollback` | Rollback auf vorherige Generation |
-| `nix flake update` | Alle Inputs updaten |
-| `nix flake show` | Flake-Outputs anzeigen |
-| `nix repl` dann `:lf .` | Interaktiv Config inspizieren |
-| `nix develop` | Dev Shell betreten |
-| `nix shell nixpkgs#paket` | Temporär ein Paket nutzen |
-| `nix search nixpkgs paketname` | Pakete suchen |
-| `nixos-option services.openssh.enable` | Option-Doku anzeigen |

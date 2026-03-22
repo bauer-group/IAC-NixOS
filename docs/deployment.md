@@ -1,180 +1,162 @@
 # Deployment
 
-## Deployment-Methoden im Überblick
+## Deployment-Methoden
 
-| Methode | Wann nutzen | Parallelismus | Rollback |
-|---------|------------|---------------|----------|
-| `nixos-rebuild` | Lokal oder einzelner Remote-Host | Nein | Ja (manuell) |
-| **Colmena** | Mehrere Server, Tags/Gruppen | Ja | Ja (automatisch) |
-| `nixos-anywhere` | Erstinstallation von Null | N/A | N/A |
-| `deploy-rs` | Alternative zu Colmena, kein Root nötig | Ja | Ja (automatisch) |
+| Methode | Wann nutzen | Rollback |
+| --- | --- | --- |
+| `nixos-rebuild` | Einzelne Maschine, lokal oder remote | Boot-Menü oder `--rollback` |
+| `nixos-anywhere` | Neue Maschine von Grund auf provisionieren | Neuinstallation |
 
-## Colmena (empfohlen für Fleet Management)
+## nixos-rebuild (Standard)
 
-### Setup
-
-Colmena ist bereits im `devShells` des Flakes enthalten:
+### Lokal auf der Zielmaschine
 
 ```bash
-cd ~/bauer-nix
-nix develop    # Startet Shell mit colmena, agenix, etc.
+cd /pfad/zum/repo
+sudo nixos-rebuild switch --flake .#server --impure
 ```
 
-### Befehle
+### Remote von einer anderen Maschine
 
 ```bash
-# Alle Production-Server deployen
-colmena apply --on @production
-
-# Einzelnen Host
-colmena apply --on prod-server-01
-
-# Nur bauen (ohne zu deployen)
-colmena build
-
-# Deployment-Plan anzeigen (dry-run)
-colmena apply --on @production --evaluator streaming
-
-# Nur auf erreichbare Hosts deployen
-colmena apply --on @production --keep-result
-
-# Parallele Builds (default: alle gleichzeitig)
-colmena apply --on @production --parallel 4
+nixos-rebuild switch --flake .#server \
+  --target-host root@10.0.0.5 \
+  --build-host localhost \
+  --impure
 ```
 
-### Tags
+- `--target-host`: SSH-Ziel (die Maschine die konfiguriert wird)
+- `--build-host`: Wo der Build stattfindet (lokal oder remote)
+- `--impure`: Nötig damit `/etc/nixos/params.nix` auf dem Target gelesen wird
 
-Tags werden in der Colmena-Config pro Host gesetzt:
-
-```nix
-prod-server-01 = {
-  deployment.tags = [ "production" "hetzner" "germany" ];
-  # ...
-};
-```
-
-Dann filtern:
-```bash
-colmena apply --on @production          # Alle mit Tag "production"
-colmena apply --on @hetzner             # Alle Hetzner-Server
-colmena apply --on prod-server-01       # Einzelner Host
-```
-
-## nixos-rebuild (Remote)
-
-Für einzelne Hosts ohne Colmena:
+### Testen ohne Commitment
 
 ```bash
-# Lokal bauen, remote deployen
-nixos-rebuild switch \
-  --flake .#prod-server-01 \
-  --target-host root@10.0.0.1 \
-  --build-host localhost
+# Test: Aktiviert die Config, aber beim nächsten Reboot wird zurückgesetzt
+sudo nixos-rebuild test --flake .#server --impure
 
-# Remote bauen und deployen (wenn Server genug RAM/CPU hat)
-nixos-rebuild switch \
-  --flake .#prod-server-01 \
-  --target-host root@10.0.0.1 \
-  --build-host root@10.0.0.1
-
-# Nur testen (kein Boot-Eintrag)
-nixos-rebuild test \
-  --flake .#prod-server-01 \
-  --target-host root@10.0.0.1
+# Build: Nur bauen, nicht aktivieren (zum Prüfen ob es kompiliert)
+nixos-rebuild build --flake .#server --impure
 ```
 
-## nixos-anywhere (Erstinstallation)
+## nixos-anywhere (Neuinstallation)
 
-Für neue Server, auf denen noch kein NixOS läuft:
-
-### Voraussetzungen
-
-- SSH-Zugang zum Zielserver (als root)
-- Server hat ≥1 GB RAM
-- disko-Config im Host definiert (siehe `hosts/prod-server-01/default.nix`)
-
-### Ausführung
+Provisioniert einen bestehenden Linux-Server komplett mit NixOS — bootet in ein RAM-NixOS, partitioniert, installiert:
 
 ```bash
-# Aus dem Repo-Root:
 nix run github:nix-community/nixos-anywhere -- \
-  --flake .#prod-server-01 \
-  root@1.2.3.4
-
-# Mit disko disk-config:
-nix run github:nix-community/nixos-anywhere -- \
-  --flake .#prod-server-01 \
-  --disk-encryption-keys /tmp/secret.key <(echo "mein-passwort") \
-  root@1.2.3.4
+  --flake .#server \
+  root@IP_ADRESSE
 ```
 
-### Was passiert
+**Voraussetzungen:**
 
-1. Server bootet in RAM-basiertes NixOS (via kexec)
-2. disko partitioniert und formatiert die Disks
-3. NixOS wird installiert
-4. Server rebootet in fertiges System
+- SSH-Root-Zugang zum Zielserver
+- Server hat mindestens 1 GB RAM
+- `/etc/nixos/params.nix` muss auf dem Ziel vorhanden sein (vorher per SCP kopieren)
 
 ## Deployment-Workflow (Best Practice)
 
-```
-1. Änderung machen
-   └─ vim modules/services/docker.nix
+```bash
+# 1. Änderungen im Repo machen (lokal)
+vim templates/server.nix
+vim modules/services/docker.nix
 
-2. Lokal bauen & prüfen
-   └─ nix flake check
-   └─ nixos-rebuild build --flake .#prod-server-01
+# 2. Formatierung prüfen
+nix fmt
 
-3. Auf Staging testen (optional)
-   └─ colmena apply --on staging-server
+# 3. Linting prüfen
+nix flake check
 
-4. Committen
-   └─ git add -A && git commit -m "feat: update docker config"
+# 4. Auf einer Test-Maschine testen
+nixos-rebuild test --flake .#server --impure \
+  --target-host root@test-server
 
-5. Production deployen
-   └─ colmena apply --on @production
+# 5. Committen
+git add -A && git commit -m "feat: update docker config"
 
-6. Verifizieren
-   └─ colmena exec --on @production -- systemctl status docker
+# 6. Auf Produktion deployen
+nixos-rebuild switch --flake .#server --impure \
+  --target-host root@prod-server
 
-7. Bei Problemen: Rollback
-   └─ colmena apply --on @production -- switch --rollback
-   └─ oder: auf dem Server direkt:
-      nixos-rebuild switch --rollback
-```
+# 7. Verifizieren
+./scripts/health-check.sh prod-server
 
-## CI/CD (optional)
-
-Für automatisiertes Deployment via GitHub Actions / GitLab CI:
-
-```yaml
-# .github/workflows/deploy.yml (Beispiel)
-name: Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v27
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - run: nix build .#nixosConfigurations.prod-server-01.config.system.build.toplevel
-      # Eigentliches Deployment nur manuell triggern (safety)
+# 8. Bei Problemen: Rollback
+nixos-rebuild switch --rollback --target-host root@prod-server
 ```
 
-## Remote-Befehle ausführen
+## Rollback
+
+### Via Boot-Menü
+
+Beim Booten zeigt der Bootloader (systemd-boot oder GRUB) die letzten Generationen. Ältere Generation auswählen → System startet mit der vorherigen Konfiguration.
+
+### Via CLI
 
 ```bash
-# Befehl auf allen Production-Servern
-colmena exec --on @production -- systemctl status docker
+# Zur letzten Generation zurückkehren
+sudo nixos-rebuild switch --rollback
 
-# Uptime aller Server
-colmena exec --on @production -- uptime
+# Alle Generationen anzeigen
+sudo nix-env --list-generations -p /nix/var/nix/profiles/system
 
-# NixOS-Version prüfen
-colmena exec --on @production -- nixos-version
+# Bestimmte Generation aktivieren
+sudo nix-env --switch-generation 42 -p /nix/var/nix/profiles/system
+sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
+```
+
+## Post-Deployment Health Check
+
+```bash
+# Von einem anderen Rechner aus
+./scripts/health-check.sh 10.0.0.5
+
+# Prüft:
+# ✓ SSH erreichbar
+# ✓ System gebootet
+# ✓ Keine fehlgeschlagenen Services
+# ✓ Disk < 85% voll
+# ✓ Docker läuft (falls aktiviert)
+# ✓ Firewall aktiv
+# ✓ DNS funktioniert
+# ✓ Node Exporter antwortet (falls Monitoring)
+```
+
+## Mehrere Maschinen parallel
+
+Für Fleet-Deployment (viele Maschinen gleichzeitig) kann ein einfaches Shell-Script verwendet werden:
+
+```bash
+#!/usr/bin/env bash
+SERVERS=("10.0.0.1" "10.0.0.2" "10.0.0.3")
+TEMPLATE="server"
+
+for srv in "${SERVERS[@]}"; do
+  echo "Deploying to $srv..."
+  nixos-rebuild switch --flake .#$TEMPLATE \
+    --target-host "root@$srv" \
+    --build-host localhost \
+    --impure &
+done
+wait
+
+for srv in "${SERVERS[@]}"; do
+  ./scripts/health-check.sh "$srv"
+done
+```
+
+## Updates
+
+```bash
+# Flake-Inputs aktualisieren (nixpkgs, home-manager, etc.)
+nix flake update
+
+# Prüfen was sich ändert
+nix flake lock --update-input nixpkgs
+nixos-rebuild build --flake .#server --impure
+nix-diff /run/current-system ./result  # Unterschiede anzeigen
+
+# Deployen
+sudo nixos-rebuild switch --flake .#server --impure
 ```

@@ -2,139 +2,153 @@
 
 ## Warum Secrets Management?
 
-NixOS-Konfigurationen landen im Nix Store — der ist **world-readable**.
-Passwörter, API-Keys und private Schlüssel dürfen daher **niemals** direkt
-in `.nix`-Dateien stehen.
+NixOS-Konfigurationen landen im Nix Store — der ist **world-readable**. Passwörter, API-Keys und Zertifikate dürfen daher nie direkt in `.nix`-Dateien stehen.
 
-**agenix** löst das: Secrets werden mit age verschlüsselt im Git-Repo
-gespeichert und erst zur Laufzeit auf dem Zielsystem entschlüsselt.
+**agenix** löst das: Secrets werden mit `age` verschlüsselt im Git-Repo gespeichert und erst zur Laufzeit auf dem Zielsystem entschlüsselt (unter `/run/agenix/`).
 
 ## Setup
 
-### 1. SSH-Keys sammeln
+### 1. Age-Keys sammeln
 
-agenix nutzt die SSH Host-Keys der Maschinen als Empfänger:
+Jede Maschine hat einen SSH-Host-Key, der als Age-Key verwendet wird:
 
 ```bash
-# Host-Key des Servers auslesen (Ed25519)
-ssh-keyscan -t ed25519 10.0.0.1 2>/dev/null | ssh-to-age
+# Von einer Maschine den Host-Key als Age-Key extrahieren
+ssh-keyscan -t ed25519 10.0.0.5 2>/dev/null | ssh-to-age
 
-# Oder lokal:
-cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age
-
-# Eigenen User-Key (für lokales Editieren)
+# Eigenen persönlichen Key (zum Editieren von Secrets)
 cat ~/.ssh/id_ed25519.pub | ssh-to-age
 ```
 
-### 2. `secrets/secrets.nix` erstellen
+### 2. Keys in secrets.nix eintragen
 
 ```nix
 # secrets/secrets.nix
-# Definiert WER welche Secrets entschlüsseln darf
 let
-  # User-Keys (können Secrets editieren)
-  karl = "age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  admin = "age1ql3z7hjy...";          # Dein persönlicher Key
+  srv-prod-01 = "age1abc123...";       # Host-Key von srv-prod-01
+  srv-prod-02 = "age1def456...";       # Host-Key von srv-prod-02
+  kiosk-lobby = "age1ghi789...";       # Host-Key von kiosk-lobby
 
-  # Host-Keys (können Secrets zur Laufzeit lesen)
-  prod-server-01 = "age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-  prod-server-02 = "age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-  karl-desktop   = "age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-
-  # Gruppen
-  allServers = [ prod-server-01 prod-server-02 ];
-  allHosts = allServers ++ [ karl-desktop ];
+  allServers = [ srv-prod-01 srv-prod-02 ];
+  allMachines = allServers ++ [ kiosk-lobby ];
 in {
-  # Jedes Secret: Pfad → wer darf entschlüsseln
-  "db-password.age".publicKeys       = [ karl ] ++ allServers;
-  "outline-secret.age".publicKeys    = [ karl prod-server-01 ];
-  "wireguard-key.age".publicKeys     = [ karl ] ++ allHosts;
-  "smtp-password.age".publicKeys     = [ karl ] ++ allServers;
+  "restic-password.age".publicKeys     = [ admin ] ++ allServers;
+  "webapp-env.age".publicKeys          = [ admin srv-prod-01 ];
+  "grafana-password.age".publicKeys    = [ admin srv-prod-01 ];
 }
 ```
 
-### 3. Secrets anlegen
+### 3. Secrets erstellen
 
 ```bash
-cd ~/bauer-nix
+# Dev-Shell betreten (enthält agenix CLI)
+nix develop
 
-# Secret erstellen (öffnet $EDITOR)
-agenix -e secrets/db-password.age
+# Secret erstellen (öffnet Editor)
+agenix -e secrets/webapp-env.age
 
-# Oder aus Datei/Command:
-echo "mein-geheimes-passwort" | agenix -e secrets/db-password.age
+# Oder: aus Datei/Pipe
+echo "DB_PASSWORD=supersecret" | agenix -e secrets/webapp-env.age
 
-# Secret bearbeiten
-agenix -e secrets/db-password.age
+# Passwort-Hash für User generieren
+mkpasswd -m sha-512 "mein-passwort" | agenix -e secrets/user-password.age
+```
 
-# Alle Secrets neu verschlüsseln (nach Key-Änderung in secrets.nix)
+### 4. Secrets in params.nix referenzieren
+
+Die Secrets werden zur Laufzeit unter `/run/agenix/<name>` verfügbar. Referenziere sie in der `params.nix` der Maschine:
+
+```nix
+# /etc/nixos/params.nix auf srv-prod-01
+{ ... }: {
+  bauer.params = {
+    hostName = "srv-prod-01";
+    # ...
+
+    server = {
+      composeProjects = {
+        webapp = {
+          directory = "/opt/webapp";
+          envFile = /run/agenix/webapp-env;  # ← agenix Secret
+        };
+      };
+
+      backup = {
+        enable = true;
+        repository = "sftp:backup@storage:/backups/srv-prod-01";
+        passwordFile = /run/agenix/restic-password;  # ← agenix Secret
+      };
+    };
+  };
+
+  # agenix Secret-Deklarationen
+  age.secrets.webapp-env.file = /pfad/zum/repo/secrets/webapp-env.age;
+  age.secrets.restic-password.file = /pfad/zum/repo/secrets/restic-password.age;
+}
+```
+
+## Secret-Rotation
+
+```bash
+# 1. Neuen Key hinzufügen oder alten entfernen in secrets/secrets.nix
+vim secrets/secrets.nix
+
+# 2. Alle Secrets neu verschlüsseln
+agenix -r
+
+# 3. Committen und deployen
+git add secrets/
+git commit -m "chore: rotate secrets"
+nixos-rebuild switch --flake .#server --impure
+```
+
+## Workflow-Übersicht
+
+```text
+┌─ Entwickler-Rechner ─────────────────────────┐
+│  secrets.nix       → Definiert wer was darf   │
+│  *.age Dateien     → Verschlüsselt im Git     │
+│  agenix CLI        → Erstellen/Bearbeiten      │
+└──────────────────────────────────────────────┘
+                     │ git push
+                     ▼
+┌─ Zielmaschine ───────────────────────────────┐
+│  /run/agenix/*     → Entschlüsselt, 0400     │
+│  SSH Host-Key      → Zum Entschlüsseln        │
+│  systemd Services  → Lesen aus /run/agenix/   │
+└──────────────────────────────────────────────┘
+```
+
+## Häufige Secrets
+
+| Secret | Datei | Wer braucht es |
+| --- | --- | --- |
+| User-Passwort | `user-password.age` | Alle Maschinen |
+| Restic Backup | `restic-password.age` | Server mit Backup |
+| Docker .env | `webapp-env.age` | Server mit diesem Compose-Projekt |
+| Grafana Admin | `grafana-password.age` | Monitoring-Server |
+| Wireguard Key | `wireguard-private.age` | VPN-Teilnehmer |
+
+## Troubleshooting
+
+### "Failed to decrypt"
+
+```bash
+# Prüfe ob der Host-Key in secrets.nix eingetragen ist
+cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age
+# Ergebnis mit dem Eintrag in secrets.nix vergleichen
+
+# Secrets neu verschlüsseln nach Key-Änderung
 agenix -r
 ```
 
-### 4. In NixOS-Config nutzen
+### Secret-Datei ist leer auf der Maschine
 
-```nix
-# In einem Modul oder Host-Config:
-{ config, ... }: {
-  # Secret deklarieren
-  age.secrets.db-password = {
-    file = ../../secrets/db-password.age;
-    owner = "postgres";     # Welcher User darf lesen
-    group = "postgres";
-    mode = "0400";          # Nur Eigentümer darf lesen
-  };
+```bash
+# Prüfe ob der agenix-Service läuft
+systemctl status agenix
 
-  # Secret referenzieren (Pfad zur entschlüsselten Datei)
-  services.postgresql.initialScript = pkgs.writeText "init.sql" ''
-    ALTER USER myapp PASSWORD '$(cat ${config.age.secrets.db-password.path})';
-  '';
-
-  # Oder als Environment-Variable in systemd:
-  systemd.services.myapp.serviceConfig = {
-    EnvironmentFile = config.age.secrets.db-password.path;
-  };
-}
+# Prüfe Berechtigungen
+ls -la /run/agenix/
 ```
-
-## Repo-Struktur mit Secrets
-
-```
-bauer-nix/
-├── secrets/
-│   ├── secrets.nix          # Key-Zuordnung (NICHT verschlüsselt, committen!)
-│   ├── db-password.age      # Verschlüsselt (committen!)
-│   ├── outline-secret.age   # Verschlüsselt (committen!)
-│   └── wireguard-key.age    # Verschlüsselt (committen!)
-├── modules/
-│   └── ...
-```
-
-**Wichtig:** Die `.age`-Dateien sind sicher und können committet werden.
-Nur wer den richtigen Private Key hat, kann sie entschlüsseln.
-
-## Workflow
-
-```
-1. Secret anlegen:     agenix -e secrets/neues-secret.age
-2. In secrets.nix:     Hosts zuordnen
-3. In NixOS-Config:    age.secrets.neues-secret.file = ...
-4. Deployen:           colmena apply --on @production
-5. Auf dem Server:     cat /run/agenix/neues-secret  (nur als root/owner)
-```
-
-## Alternative: sops-nix
-
-Falls du lieber sops nutzt (unterstützt auch GPG und cloud KMS):
-
-```nix
-# In flake.nix inputs:
-sops-nix.url = "github:Mic92/sops-nix";
-
-# Dann statt agenix:
-sops.secrets.db-password = {
-  sopsFile = ./secrets/secrets.yaml;
-  owner = "postgres";
-};
-```
-
-sops-nix ist flexibler (YAML/JSON/ENV-Format, mehrere KMS-Backends),
-agenix ist simpler (nur age, ein Secret pro Datei).
