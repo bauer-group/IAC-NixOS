@@ -1,6 +1,6 @@
 # secrets/secrets.nix
 # ─────────────────────────────────────────────────────────────────────
-# Definiert welche Host-/User-Keys welche Secrets entschlüsseln dürfen.
+# Definiert welche Keys welche Secrets entschlüsseln dürfen.
 # Dieses File ist NICHT verschlüsselt und wird committet.
 #
 # Keys generieren:
@@ -8,20 +8,23 @@
 #   cat ~/.ssh/id_ed25519.pub | ssh-to-age
 # ─────────────────────────────────────────────────────────────────────
 let
-  # ── User Keys (können Secrets editieren) ────────────────────────
-  karl = "age1TODO_REPLACE_WITH_YOUR_AGE_KEY";
+  # ── Admin Keys (können Secrets editieren) ──────────────────────
+  admin = "age1TODO_REPLACE_WITH_YOUR_AGE_KEY";
 
-  # ── Host Keys (können Secrets zur Laufzeit lesen) ───────────────
-  karl-desktop   = "age1TODO_REPLACE_WITH_HOST_KEY";
-  prod-server-01 = "age1TODO_REPLACE_WITH_HOST_KEY";
-  prod-server-02 = "age1TODO_REPLACE_WITH_HOST_KEY";
+  # ── Machine Keys (können Secrets zur Laufzeit lesen) ───────────
+  # Add each machine's age key here after deployment:
+  # machine-01 = "age1...";
+  # machine-02 = "age1...";
 
   # ── Gruppen ─────────────────────────────────────────────────────
-  allServers = [ prod-server-01 prod-server-02 ];
-  allHosts = allServers ++ [ karl-desktop ];
-in {
+  allMachines = [
+    # machine-01
+    # machine-02
+  ];
+in
+{
   # Dateiname → wer darf entschlüsseln
-  # "db-password.age".publicKeys        = [ karl ] ++ allServers;
-  # "outline-secret-key.age".publicKeys = [ karl prod-server-01 ];
-  # "wireguard-private.age".publicKeys  = [ karl ] ++ allHosts;
+  # "restic-password.age".publicKeys    = [ admin ] ++ allMachines;
+  # "outline-env.age".publicKeys        = [ admin machine-01 ];
+  # "grafana-password.age".publicKeys   = [ admin machine-01 ];
 }

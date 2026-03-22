@@ -1,11 +1,18 @@
-# modules/roles/embedded-dev.nix
+# modules/features/embedded-dev.nix
 # ─────────────────────────────────────────────────────────────────────
-# Embedded systems / CAN-Bus development role.
+# Embedded systems / CAN-Bus development feature module.
 # Switches to latest kernel for newest CAN-Bus drivers.
 # Includes SocketCAN tooling, serial debug, cross-compilation support.
+#
+# Enable via: bauer.params.dev.embeddedDev = true (in params.nix)
 # ─────────────────────────────────────────────────────────────────────
-{ config, lib, pkgs, ... }: {
-
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
   # ══════════════════════════════════════════════════════════════════
   # KERNEL — Latest stable for newest CAN-Bus driver support
   # ══════════════════════════════════════════════════════════════════
@@ -18,64 +25,63 @@
     "can_raw"
     "can_bcm"
     "can_gw"
-    "can_isotp"     # ISO 15765-2 (ISO-TP) — automotive diagnostics / UDS
+    "can_isotp" # ISO 15765-2 (ISO-TP) — automotive diagnostics / UDS
 
     # Virtual CAN for testing without hardware
     "vcan"
-    "vxcan"         # Virtual CAN tunnel (pairs of vcan)
+    "vxcan" # Virtual CAN tunnel (pairs of vcan)
 
     # USB CAN adapters
-    "peak_usb"      # PEAK-System PCAN-USB
-    "gs_usb"        # Geschwister Schneider / candleLight / canable
-    "kvaser_usb"    # Kvaser USB adapters
-    "ems_usb"       # EMS CPC-USB
-    "usb_8dev"      # USB2CAN by 8 Devices
-    "mcba_usb"      # Microchip CAN BUS Analyzer
+    "peak_usb" # PEAK-System PCAN-USB
+    "gs_usb" # Geschwister Schneider / candleLight / canable
+    "kvaser_usb" # Kvaser USB adapters
+    "ems_usb" # EMS CPC-USB
+    "usb_8dev" # USB2CAN by 8 Devices
+    "mcba_usb" # Microchip CAN BUS Analyzer
 
     # Serial line CAN
-    "slcan"         # Serial Line CAN (e.g. USBtin, LAWICEL)
+    "slcan" # Serial Line CAN (e.g. USBtin, LAWICEL)
 
     # MCP251x SPI (for Raspberry Pi / embedded boards)
     "mcp251x"
-    "mcp251xfd"     # MCP2517FD / MCP2518FD
-
-    # Ethernet-based CAN
-    "vcan"
+    "mcp251xfd" # MCP2517FD / MCP2518FD
   ];
 
   # ── Extra kernel config (ensure CAN subsystem is built) ─────────
-  boot.kernelPatches = [{
-    name = "canbus-full-support";
-    patch = null;
-    extraStructuredConfig = with lib.kernel; {
-      # Core CAN
-      CAN = yes;
-      CAN_RAW = yes;
-      CAN_BCM = yes;
-      CAN_GW = yes;
-      CAN_ISOTP = yes;
+  boot.kernelPatches = [
+    {
+      name = "canbus-full-support";
+      patch = null;
+      extraStructuredConfig = with lib.kernel; {
+        # Core CAN
+        CAN = yes;
+        CAN_RAW = yes;
+        CAN_BCM = yes;
+        CAN_GW = yes;
+        CAN_ISOTP = yes;
 
-      # Virtual
-      CAN_VCAN = module;
-      CAN_VXCAN = module;
+        # Virtual
+        CAN_VCAN = module;
+        CAN_VXCAN = module;
 
-      # USB adapters
-      CAN_PEAK_USB = module;
-      CAN_GS_USB = module;
-      CAN_KVASER_USB = module;
-      CAN_SLCAN = module;
-      CAN_EMS_USB = module;
-      CAN_8DEV_USB = module;
-      CAN_MCBA_USB = module;
+        # USB adapters
+        CAN_PEAK_USB = module;
+        CAN_GS_USB = module;
+        CAN_KVASER_USB = module;
+        CAN_SLCAN = module;
+        CAN_EMS_USB = module;
+        CAN_8DEV_USB = module;
+        CAN_MCBA_USB = module;
 
-      # SPI
-      CAN_MCP251X = module;
-      CAN_MCP251XFD = module;
+        # SPI
+        CAN_MCP251X = module;
+        CAN_MCP251XFD = module;
 
-      # J1939 (SAE J1939 — heavy vehicles, agriculture)
-      CAN_J1939 = module;
-    };
-  }];
+        # J1939 (SAE J1939 — heavy vehicles, agriculture)
+        CAN_J1939 = module;
+      };
+    }
+  ];
 
   # ── Kernel module auto-load parameters ──────────────────────────
   boot.extraModprobeConfig = ''
@@ -106,32 +112,32 @@
   # ══════════════════════════════════════════════════════════════════
   environment.systemPackages = with pkgs; [
     # ── CAN-Bus ────────────────────────────────────────────────────
-    can-utils           # candump, cansend, cangen, cansniffer, isotpsend, etc.
+    can-utils
 
     # ── Python CAN ─────────────────────────────────────────────────
     (python3.withPackages (ps: with ps; [
-      python-can        # Universal CAN library
-      cantools          # DBC file parsing, signal encoding/decoding
-      udsoncan          # UDS (Unified Diagnostic Services) client
+      python-can
+      cantools
+      udsoncan
     ]))
 
     # ── Serial / Debug ─────────────────────────────────────────────
-    minicom             # Serial terminal
-    picocom             # Lightweight serial terminal
-    screen              # Can also be used for serial
-    usbutils            # lsusb
-    pciutils            # lspci
+    minicom
+    picocom
+    screen
+    usbutils
+    pciutils
 
     # ── Embedded Toolchains ────────────────────────────────────────
-    gcc-arm-embedded    # ARM Cortex-M cross-compiler
-    openocd             # On-chip debugger (JTAG/SWD)
-    stlink              # ST-Link programmer
-    esptool             # ESP32 flash tool
-    platformio-core     # PlatformIO CLI
+    gcc-arm-embedded
+    openocd
+    stlink
+    esptool
+    platformio-core
 
     # ── Logic Analyzer / Protocol ──────────────────────────────────
-    sigrok-cli          # Signal analysis CLI
-    pulseview           # GUI logic analyzer (sigrok)
+    sigrok-cli
+    pulseview
 
     # ── Build Tools ────────────────────────────────────────────────
     cmake
@@ -150,6 +156,19 @@
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+
+      # Hardening — only needs CAP_NET_ADMIN to create interfaces
+      ProtectHome = true;
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+      AmbientCapabilities = [ "CAP_NET_ADMIN" ];
+      RestrictNamespaces = true;
+      RestrictSUIDSGID = true;
+      ProtectKernelModules = true;
+      ProtectKernelTunables = true;
+      ProtectControlGroups = true;
     };
     script = ''
       ${pkgs.iproute2}/bin/ip link add dev vcan0 type vcan 2>/dev/null || true
@@ -158,10 +177,4 @@
       ${pkgs.iproute2}/bin/ip link set up vcan1 2>/dev/null || true
     '';
   };
-
-  # ══════════════════════════════════════════════════════════════════
-  # NETWORKING — CAN-specific
-  # ══════════════════════════════════════════════════════════════════
-  # Open CAN port range if using CAN-over-Ethernet / cannelloni
-  # networking.firewall.allowedUDPPorts = [ 20000 ];
 }

@@ -1,22 +1,44 @@
 # modules/baseline/networking.nix
 # ─────────────────────────────────────────────────────────────────────
-# Network baseline: firewall defaults, DNS, hostname conventions.
+# Network baseline: firewall, DNS, hostname, static/DHCP from params.
 # ─────────────────────────────────────────────────────────────────────
-{ lib, ... }: {
+{
+  lib,
+  config,
+  ...
+}:
+let
+  params = config.bauer.params;
+  net = params.network;
+in
+{
+  # ── Hostname ────────────────────────────────────────────────────────
+  networking.hostName = params.hostName;
 
-  # Enable firewall by default — services opt-in to open ports
+  # ── IP configuration ───────────────────────────────────────────────
+  networking.useDHCP = net.useDHCP;
+  networking.interfaces.${net.interface} = lib.mkIf (!net.useDHCP) {
+    ipv4.addresses = [
+      {
+        address = net.address;
+        prefixLength = net.prefixLength;
+      }
+    ];
+  };
+  networking.defaultGateway = lib.mkIf (!net.useDHCP && net.gateway != null) net.gateway;
+  networking.nameservers = net.nameservers;
+
+  # ── Firewall ────────────────────────────────────────────────────────
   networking.firewall = {
     enable = lib.mkDefault true;
     allowPing = lib.mkDefault true;
-
-    # Log dropped packets (useful for debugging, not too noisy)
+    allowedTCPPorts = net.openPorts;
     logReversePathDrops = lib.mkDefault true;
   };
 
-  # Use systemd-resolved for DNS
+  # ── DNS ─────────────────────────────────────────────────────────────
   services.resolved = {
     enable = lib.mkDefault true;
-    # Cloudflare + Google as fallback
     fallbackDns = [
       "1.1.1.1"
       "8.8.8.8"
@@ -25,18 +47,18 @@
     dnsovertls = "opportunistic";
   };
 
-  # Sane kernel network parameters
+  # ── Kernel network parameters ──────────────────────────────────────
   boot.kernel.sysctl = {
-    # TCP hardening
     "net.ipv4.tcp_syncookies" = lib.mkDefault 1;
     "net.ipv4.conf.all.rp_filter" = lib.mkDefault 1;
     "net.ipv4.conf.default.rp_filter" = lib.mkDefault 1;
-
-    # Disable IPv6 router advertisements on servers (override on desktops)
     "net.ipv6.conf.all.accept_ra" = lib.mkDefault 0;
-
-    # BBR congestion control (better throughput)
     "net.core.default_qdisc" = "fq";
     "net.ipv4.tcp_congestion_control" = "bbr";
   };
+
+  # ── Locale (from params) ───────────────────────────────────────────
+  time.timeZone = params.timezone;
+  i18n.defaultLocale = lib.mkDefault params.locale;
+  console.keyMap = lib.mkDefault params.keymap;
 }

@@ -1,14 +1,14 @@
 {
-  description = "BAUER GROUP Infrastructure — NixOS Fleet Configuration";
+  description = "BAUER GROUP Infrastructure — Parametric NixOS Templates";
 
   inputs = {
-    # Stable channel for production servers
+    # Stable channel for production
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
     # Unstable channel for latest kernel & bleeding-edge packages
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Home Manager for user-level config (dotfiles, shell, editors)
+    # Home Manager for user-level config
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -26,146 +26,155 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Secret management (age-encrypted secrets in Git)
+    # Secret management
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Code formatting
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Pre-commit hooks
+    git-hooks-nix = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, disko, agenix, colmena, ... }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      disko,
+      agenix,
+      treefmt-nix,
+      git-hooks-nix,
+      ...
+    }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
-
-      # Overlay: makes pkgs.unstable.* available everywhere
-      unstableOverlay = final: prev: {
-        unstable = import nixpkgs-unstable {
-          inherit (final) config;
-          inherit (final.stdenv.hostPlatform) system;
-        };
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
       };
 
-      # Shared specialArgs passed to all modules
+      # ── Overlays ────────────────────────────────────────────────────
+      overlays = import ./overlays { inherit nixpkgs-unstable; };
+      unstableOverlay = overlays.unstable;
+
       specialArgs = { inherit inputs self; };
 
-      # Helper: generate a NixOS system configuration
-      mkHost = { hostname, modules ? [], isDesktop ? false }:
+      # ── Base modules (shared by all templates) ──────────────────────
+      baseModules = [
+        { nixpkgs.overlays = [ unstableOverlay ]; }
+
+        # Parameter definitions
+        ./modules/params.nix
+
+        # Home Manager
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = specialArgs;
+        }
+
+        # Agenix + Disko
+        agenix.nixosModules.default
+        disko.nixosModules.disko
+
+        # Read machine-local params file (requires --impure)
+        /etc/nixos/params.nix
+      ];
+
+      # ── Home Manager wiring ─────────────────────────────────────────
+      # Dynamically sets home-manager.users.<name> from bauer.params.user
+      homeManagerModule =
+        { config, ... }:
+        {
+          home-manager.users.${config.bauer.params.user.name} = import ./home/user.nix;
+        };
+
+      # ── Template builder ────────────────────────────────────────────
+      mkTemplate =
+        templatePath:
         nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
-          modules = [
-            # Global overlay
-            { nixpkgs.overlays = [ unstableOverlay ]; }
-
-            # Host-specific config
-            ./hosts/${hostname}
-
-            # Home Manager as NixOS module
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = specialArgs;
-            }
-
-            # Agenix secrets module
-            agenix.nixosModules.default
-
-            # Disko disk management
-            disko.nixosModules.disko
-          ] ++ modules;
+          modules = baseModules ++ [
+            templatePath
+            homeManagerModule
+          ];
         };
 
-    in {
-      # ── NixOS Configurations ──────────────────────────────────────────
+      # ── Formatting ──────────────────────────────────────────────────
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+
+      # ── Pre-commit hooks ────────────────────────────────────────────
+      pre-commit-check = git-hooks-nix.lib.${system}.run {
+        src = self;
+        hooks = {
+          nixfmt-rfc-style.enable = true;
+          statix.enable = true;
+          deadnix.enable = true;
+          check-merge-conflicts.enable = true;
+        };
+      };
+
+    in
+    {
+      # ── NixOS Templates ──────────────────────────────────────────────
+      # Deploy with: nixos-rebuild switch --flake .#<template> --impure
       nixosConfigurations = {
-
-        # Developer Desktop (Karl)
-        karl-desktop = mkHost {
-          hostname = "karl-desktop";
-          isDesktop = true;
-          modules = [
-            ./modules/roles/desktop-dev.nix
-            ./modules/roles/embedded-dev.nix
-          ];
-        };
-
-        # Production Server 01
-        prod-server-01 = mkHost {
-          hostname = "prod-server-01";
-          modules = [
-            ./modules/roles/server.nix
-            ./modules/services/docker.nix
-            ./modules/services/outline.nix
-          ];
-        };
-
-        # Production Server 02
-        prod-server-02 = mkHost {
-          hostname = "prod-server-02";
-          modules = [
-            ./modules/roles/server.nix
-            ./modules/services/docker.nix
-          ];
-        };
+        desktop-dev = mkTemplate ./templates/desktop-dev.nix;
+        desktop-kiosk = mkTemplate ./templates/desktop-kiosk.nix;
+        server = mkTemplate ./templates/server.nix;
       };
 
-      # ── Colmena Deployment ────────────────────────────────────────────
-      colmena = {
-        meta = {
-          nixpkgs = import nixpkgs {
-            inherit system;
-            overlays = [ unstableOverlay ];
-          };
-          specialArgs = specialArgs;
-        };
+      # ── Overlays ────────────────────────────────────────────────────
+      overlays.default = unstableOverlay;
 
-        defaults = { ... }: {
-          imports = [
-            ./modules/roles/server.nix
-            agenix.nixosModules.default
-            disko.nixosModules.disko
+      # ── Formatter ───────────────────────────────────────────────────
+      formatter.${system} = treefmtEval.config.build.wrapper;
+
+      # ── Checks ──────────────────────────────────────────────────────
+      checks.${system} = {
+        formatting = treefmtEval.config.build.check self;
+        pre-commit = pre-commit-check;
+        lint = pkgs.runCommand "lint" {
+          nativeBuildInputs = with pkgs; [
+            statix
+            deadnix
           ];
-        };
-
-        prod-server-01 = { name, ... }: {
-          deployment = {
-            targetHost = "10.0.0.1";    # TODO: set real IP
-            targetUser = "root";
-            tags = [ "production" "hetzner" ];
-          };
-          imports = [ ./hosts/prod-server-01 ];
-        };
-
-        prod-server-02 = { name, ... }: {
-          deployment = {
-            targetHost = "10.0.0.2";    # TODO: set real IP
-            targetUser = "root";
-            tags = [ "production" "hetzner" ];
-          };
-          imports = [ ./hosts/prod-server-02 ];
-        };
+        } ''
+          cd ${self}
+          statix check .
+          deadnix --fail .
+          touch $out
+        '';
       };
 
-      # ── Dev Shell ─────────────────────────────────────────────────────
-      # `nix develop` gives you all deployment tools
+      # ── Dev Shell ───────────────────────────────────────────────────
       devShells.${system}.default = pkgs.mkShell {
+        inherit (pre-commit-check) shellHook;
         buildInputs = with pkgs; [
+          # Deployment
           nixos-rebuild
-          colmena.packages.${system}.colmena
+          inputs.colmena.packages.${system}.colmena
           agenix.packages.${system}.default
           git
           ssh-to-age
+
+          # Code quality
+          statix
+          deadnix
+          treefmtEval.config.build.wrapper
         ];
-        shellHook = ''
-          echo "╔══════════════════════════════════════════╗"
-          echo "║  BAUER GROUP NixOS Infrastructure Shell  ║"
-          echo "╠══════════════════════════════════════════╣"
-          echo "║  colmena apply --on @production          ║"
-          echo "║  colmena apply --on prod-server-01       ║"
-          echo "║  nixos-rebuild switch --flake .#hostname  ║"
-          echo "╚══════════════════════════════════════════╝"
-        '';
       };
     };
 }
