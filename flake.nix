@@ -166,8 +166,8 @@
             }
             ''
               cd ${self}
-              statix check .
-              deadnix --fail .
+              statix check . --ignore params.example.nix
+              deadnix --fail . --exclude params.example.nix
               touch $out
             '';
       };

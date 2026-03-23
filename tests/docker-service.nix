@@ -11,7 +11,7 @@ pkgs.nixosTest {
   name = "docker-service";
 
   nodes.server =
-    { ... }:
+    _:
     {
       imports = [
         ../modules/services/docker.nix

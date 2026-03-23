@@ -11,7 +11,7 @@ pkgs.nixosTest {
   name = "firewall";
 
   nodes.server =
-    { ... }:
+    _:
     {
       imports = [
         ../modules/baseline/networking.nix

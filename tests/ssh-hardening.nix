@@ -11,7 +11,7 @@ pkgs.nixosTest {
   name = "ssh-hardening";
 
   nodes.server =
-    { ... }:
+    _:
     {
       imports = [
         ../modules/baseline/ssh.nix
