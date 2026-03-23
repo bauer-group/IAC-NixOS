@@ -14,6 +14,8 @@
     indent_size = 2;
   };
 
-  # YAML formatting (GitHub Actions, dependabot)
-  programs.yamlfmt.enable = true;
+  # Exclude workflow files (GitHub blocks auto-commits to .github/workflows/)
+  settings.global.excludes = [
+    ".github/workflows/*"
+  ];
 }

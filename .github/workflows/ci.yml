@@ -41,6 +41,7 @@ jobs:
         with:
           commit_message: "style: auto-format nix files"
           commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          file_pattern: "*.nix **/*.nix *.md **/*.md *.sh **/*.sh"
 
       - name: Flake check
         run: nix flake check --all-systems
