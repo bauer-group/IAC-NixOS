@@ -14,8 +14,8 @@
     indent_size = 2;
   };
 
-  # Exclude workflow files (GitHub blocks auto-commits to .github/workflows/)
+  # Exclude .github/ (auto-commits to workflows require special permissions)
   settings.global.excludes = [
-    ".github/workflows/*"
+    ".github/**"
   ];
 }

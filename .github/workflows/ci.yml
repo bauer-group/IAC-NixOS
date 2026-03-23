@@ -1,4 +1,4 @@
-name: CI
+name: 🧹 CI
 
 on:
   pull_request:
@@ -14,40 +14,36 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: write
-
 jobs:
   lint:
-    name: Lint & Format
+    name: 🔍 Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Install Nix
+      - name: ❄️ Install Nix
         uses: cachix/install-nix-action@v30
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: Format
-        run: nix fmt
+      - name: 🧹 Format check
+        run: |
+          nix fmt
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "::error::The following files need formatting:"
+            git diff --name-only
+            echo ""
+            echo "Run 'nix fmt' locally or trigger the 🎨 Format workflow."
+            exit 1
+          fi
 
-      - name: Commit formatting fixes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style: auto-format nix files"
-          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          file_pattern: "*.nix **/*.nix *.md **/*.md *.sh **/*.sh"
-
-      - name: Flake check
+      - name: ✅ Flake check
         run: nix flake check --all-systems
 
   build:
-    name: Build ${{ matrix.template }}
+    name: 🔨 Build ${{ matrix.template }}
     runs-on: ubuntu-latest
     needs: lint
     strategy:
@@ -60,12 +56,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
+      - name: ❄️ Install Nix
         uses: cachix/install-nix-action@v30
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: Build ${{ matrix.template }}
+      - name: 📦 Build ${{ matrix.template }}
         run: nix build .#nixosConfigurations.${{ matrix.template }}.config.system.build.toplevel --no-link
