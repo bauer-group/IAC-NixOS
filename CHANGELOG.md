@@ -1,3 +1,14 @@
+## [2.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.2.0...v2.0.0) (2026-03-23)
+
+### ⚠ BREAKING CHANGES
+
+* **namespace:** Existing nixos configurations using `bauer.params` must be
+updated to use `bauergroup.params` and all references updated accordingly.
+
+### ♻️ Refactoring
+
+* **namespace:** renamed module namespace from bauer to bauergroup ([954c5b0](https://github.com/bauer-group/IAC-NixOS/commit/954c5b0b87303840d71770d259884b97931471b4))
+
 ## [1.2.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.6...v1.2.0) (2026-03-23)
 
 ### 🚀 Features
