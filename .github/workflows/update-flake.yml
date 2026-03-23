@@ -1,0 +1,59 @@
+name: 🔄 Flake Update
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Sonntag 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: 📦 Update Flake Inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ❄️ Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - name: 🔄 Update flake.lock
+        run: nix flake update
+
+      - name: 📋 Generate changelog
+        id: changelog
+        run: |
+          if git diff --quiet flake.lock 2>/dev/null; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'body<<ENDOFBODY'
+              echo '## Flake Input Updates'
+              echo ''
+              echo '```'
+              nix flake metadata --json 2>/dev/null | nix run nixpkgs#jq -- -r '.locks.nodes | to_entries[] | select(.value.locked.lastModified) | "\(.key): \(.value.locked.rev // "n/a" | .[0:8])"' 2>/dev/null || echo "see flake.lock diff"
+              echo '```'
+              echo ''
+              echo 'Updates nixpkgs, home-manager, and all other flake inputs to latest versions.'
+              echo 'Machines will auto-deploy at 03:00 after merge.'
+              echo 'ENDOFBODY'
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🔀 Create Pull Request
+        if: steps.changelog.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(deps): weekly flake input update"
+          title: "🔄 Weekly Flake Update"
+          body: ${{ steps.changelog.outputs.body }}
+          branch: auto/flake-update
+          delete-branch: true
+          labels: dependencies,automated

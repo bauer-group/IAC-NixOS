@@ -4,6 +4,8 @@
 
 Jede Maschine fuehrt automatisch folgende Prozesse aus:
 
+### Auf jeder Maschine
+
 | Prozess | Zeitpunkt | Was passiert |
 | --- | --- | --- |
 | **Auto-Update** | Taeglich 03:00 | Pulled neueste Config + Pakete von GitHub, rebuild, reboot bei Bedarf |
@@ -12,6 +14,16 @@ Jede Maschine fuehrt automatisch folgende Prozesse aus:
 | **Restic Backup** | Taeglich (wenn aktiviert) | Sichert /opt, /var/lib, /home auf Backup-Server |
 | **Chrony NTP** | Permanent | Zeitsynchronisation mit time.bauer-group.com |
 | **Fail2ban** | Permanent | Blockiert SSH Brute-Force (5 Versuche → 1h Ban) |
+
+### In GitHub (CI/CD)
+
+| Prozess | Zeitpunkt | Was passiert |
+| --- | --- | --- |
+| **🧹 CI** | Bei Push/PR auf main | Linting (deadnix) |
+| **🎨 Format** | Manuell | Formatiert alle .nix Dateien |
+| **🔄 Flake Update** | Sonntag 02:00 UTC | Erstellt PR mit aktualisierten Paketversionen |
+| **🚀 Release** | Bei Push auf main | Semantic Versioning + Changelog |
+| **📢 Teams** | Bei Events | Benachrichtigungen an Microsoft Teams |
 
 ## Auto-Update
 
@@ -196,19 +208,64 @@ sudo fail2ban-client set sshd unbanip 1.2.3.4
 journalctl -u fail2ban.service -n 50
 ```
 
-## Workflow: Aenderung deployen
+## Woechentliches Flake Update (Paket-Updates)
+
+Config-Aenderungen werden sofort deployed (naechster 03:00 Zyklus). Aber **Paketversionen** (nixpkgs, home-manager, etc.) sind im `flake.lock` gepinnt und aendern sich erst nach `nix flake update`.
+
+Der **🔄 Flake Update** Workflow automatisiert das:
 
 ```text
-1. Entwickler aendert Config im Repo
-2. Push auf main
-3. CI prueft Linting (deadnix)
-4. 🎨 Format Workflow (manuell) formatiert bei Bedarf
-5. 03:00 nachts: Alle Maschinen pullen automatisch
-6. Rebuild + Reboot (wenn noetig) im Fenster 03:00-03:30
-7. Morgens: Alles aktuell
+Sonntag 02:00 UTC
+  │
+  ├─ nix flake update (aktualisiert flake.lock)
+  │
+  ├─ Keine Aenderungen? → Nichts passiert
+  │
+  └─ Neue Versionen?
+       │
+       └─ Erstellt Pull Request "🔄 Weekly Flake Update"
+          mit Changelog der aktualisierten Inputs
 ```
 
-Fuer dringende Aenderungen: manuell deployen statt auf den Timer zu warten:
+### Warum ein PR statt direkt auf main?
+
+- **Review moeglich** — bei Breaking Changes kann man den PR ablehnen
+- **CI laeuft** — Linting wird geprueft bevor gemergt wird
+- **Rollback einfach** — PR revert statt flake.lock manuell zuruecksetzen
+
+### Manuell triggern
+
+GitHub Actions → 🔄 Flake Update → Run workflow
+
+### Was wird aktualisiert?
+
+| Input | Channel | Was aendert sich |
+| --- | --- | --- |
+| nixpkgs | nixos-25.11 | Sicherheitspatches, Bugfixes, Paketversionen |
+| nixpkgs-unstable | nixos-unstable | Bleeding-edge Pakete (nur via pkgs.unstable.*) |
+| home-manager | release-25.11 | User-Config Module |
+| agenix | latest | Secrets Management |
+| disko | latest | Disk Partitioning |
+| colmena | latest | Fleet Deployment |
+| treefmt-nix | latest | Code Formatter |
+| git-hooks-nix | latest | Pre-Commit Hooks |
+
+## Gesamter Update-Zyklus
+
+```text
+Sonntag 02:00    🔄 Flake Update erstellt PR mit neuen Paketversionen
+Montag           Entwickler reviewt + merged PR (oder auto-merge)
+Dienstag 03:00   Alle Maschinen rebuilden mit neuen Paketen
+```
+
+Config-Aenderungen sind schneller:
+
+```text
+Jederzeit        Entwickler pusht Config-Aenderung auf main
+Naechste 03:00   Alle Maschinen rebuilden automatisch
+```
+
+Fuer dringende Aenderungen — nicht auf Timer warten:
 
 ```bash
 # Einzelne Maschine sofort updaten
