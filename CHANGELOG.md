@@ -1,3 +1,9 @@
+## [1.1.3](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.2...v1.1.3) (2026-03-23)
+
+### 🐛 Bug Fixes
+
+* **networking:** fixed DHCP configuration module precedence ([8aacd64](https://github.com/bauer-group/IAC-NixOS/commit/8aacd64d6027ccd9a1efcc0993efaa6bd88274fe))
+
 ## [1.1.2](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.1...v1.1.2) (2026-03-23)
 
 ### ♻️ Refactoring
