@@ -18,7 +18,7 @@ pkgs.nixosTest {
         ../modules/baseline/nix.nix
       ];
 
-      bauer.services.docker.enable = true;
+      bauergroup.services.docker.enable = true;
       users.mutableUsers = true;
     };
 

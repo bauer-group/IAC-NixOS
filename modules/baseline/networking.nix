@@ -8,7 +8,7 @@
   ...
 }:
 let
-  params = config.bauer.params;
+  params = config.bauergroup.params;
   net = params.network;
 in
 {

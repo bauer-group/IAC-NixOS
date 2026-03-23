@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────
 # Automatic system updates from Git.
 # Pulls the latest flake, rebuilds, and reboots if needed.
-# Controlled via bauer.params.autoUpdate.*
+# Controlled via bauergroup.params.autoUpdate.*
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -10,7 +10,7 @@
   ...
 }:
 let
-  cfg = config.bauer.params.autoUpdate;
+  cfg = config.bauergroup.params.autoUpdate;
 in
 {
   config = lib.mkIf cfg.enable {

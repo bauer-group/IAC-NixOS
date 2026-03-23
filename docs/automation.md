@@ -50,7 +50,7 @@ Jede Maschine fuehrt automatisch folgende Prozesse aus:
 Auto-Update ist **standardmaessig aktiviert** fuer alle Maschinen. In `/etc/nixos/params.nix`:
 
 ```nix
-bauer.params.autoUpdate = {
+bauergroup.params.autoUpdate = {
   enable = true;                                      # Default: true
   flake = "github:bauer-group/IAC-NixOS";             # Quelle
   schedule = "03:00";                                  # Taeglich um 03:00
@@ -63,7 +63,7 @@ bauer.params.autoUpdate = {
 ### Deaktivieren (z.B. fuer Testzwecke)
 
 ```nix
-bauer.params.autoUpdate.enable = false;
+bauergroup.params.autoUpdate.enable = false;
 ```
 
 ### Was wird aktualisiert?
@@ -145,7 +145,7 @@ sudo docker system prune -a --filter "until=168h"
 Nur aktiv wenn in `params.nix` konfiguriert:
 
 ```nix
-bauer.params.server.backup = {
+bauergroup.params.server.backup = {
   enable = true;
   repository = "sftp:backup@storage:/backups/hostname";
   passwordFile = /run/agenix/restic-password;

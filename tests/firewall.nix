@@ -20,7 +20,7 @@ pkgs.nixosTest {
       ];
 
       # Provide required params for networking module
-      bauer.params = {
+      bauergroup.params = {
         hostName = "test-firewall";
         network = {
           useDHCP = true;

@@ -88,7 +88,7 @@ vim /mnt/etc/nixos/params.nix
 
 ```nix
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     hostName = "srv-prod-01";
 
     user = {
@@ -126,7 +126,7 @@ vim /mnt/etc/nixos/params.nix
 
 ```nix
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     hostName = "dev-workstation-01";
 
     user = {
@@ -149,7 +149,7 @@ vim /mnt/etc/nixos/params.nix
 
 ```nix
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     hostName = "kiosk-lobby-01";
 
     user = {
@@ -253,5 +253,5 @@ nix-store --optimise                # Store deduplizieren
 # ── Diagnose ──────────────────────────────────
 systemctl --failed                  # Fehlgeschlagene Services
 journalctl -xe                      # Letzte Logs
-nixos-option bauer.params           # Parameter-Optionen anzeigen
+nixos-option bauergroup.params           # Parameter-Optionen anzeigen
 ```

@@ -1,7 +1,7 @@
 # modules/services/docker.nix
 # ─────────────────────────────────────────────────────────────────────
 # Docker Engine with BAUER GROUP defaults.
-# Enable via: bauer.services.docker.enable = true;
+# Enable via: bauergroup.services.docker.enable = true;
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -10,10 +10,10 @@
   ...
 }:
 let
-  cfg = config.bauer.services.docker;
+  cfg = config.bauergroup.services.docker;
 in
 {
-  options.bauer.services.docker = {
+  options.bauergroup.services.docker = {
     enable = lib.mkEnableOption "Docker Engine with BAUER GROUP defaults";
 
     enableOnBoot = lib.mkOption {

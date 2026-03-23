@@ -16,7 +16,7 @@ In der `/etc/nixos/params.nix` auf der Zielmaschine:
 
 ```nix
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     # ...
     dev.embeddedDev = true;
   };

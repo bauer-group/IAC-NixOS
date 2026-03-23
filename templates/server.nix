@@ -13,7 +13,7 @@
   ...
 }:
 let
-  params = config.bauer.params;
+  params = config.bauergroup.params;
   serverParams = params.server;
 in
 {
@@ -59,7 +59,7 @@ in
   };
 
   # ── Monitoring ─────────────────────────────────────────────────────
-  bauer.services.monitoring.exporterOnly = lib.mkDefault serverParams.monitoring;
+  bauergroup.services.monitoring.exporterOnly = lib.mkDefault serverParams.monitoring;
 
   # ── Journald ───────────────────────────────────────────────────────
   services.journald.extraConfig = ''
@@ -71,13 +71,13 @@ in
   boot.kernel.sysctl."net.ipv6.conf.all.accept_ra" = lib.mkForce 2;
 
   # ── Docker ─────────────────────────────────────────────────────────
-  bauer.services.docker = {
+  bauergroup.services.docker = {
     enable = true;
     enableOnBoot = true;
   };
 
   # ── Dynamic Docker Compose Services ────────────────────────────────
-  # Creates a systemd service for each entry in bauer.params.server.composeProjects
+  # Creates a systemd service for each entry in bauergroup.params.server.composeProjects
   systemd.services = lib.mapAttrs' (
     name: project:
     lib.nameValuePair "compose-${name}" {
@@ -113,7 +113,7 @@ in
   ) serverParams.composeProjects;
 
   # ── Backup ─────────────────────────────────────────────────────────
-  bauer.services.backup = lib.mkIf serverParams.backup.enable {
+  bauergroup.services.backup = lib.mkIf serverParams.backup.enable {
     enable = true;
     repository = serverParams.backup.repository;
     passwordFile = serverParams.backup.passwordFile;

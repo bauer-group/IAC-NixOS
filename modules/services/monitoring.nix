@@ -1,10 +1,10 @@
 # modules/services/monitoring.nix
 # ─────────────────────────────────────────────────────────────────────
 # Prometheus + Grafana monitoring stack.
-# Enable via: bauer.services.monitoring.enable = true;
+# Enable via: bauergroup.services.monitoring.enable = true;
 #
 # Deploy on ONE server (typically prod-server-01) to scrape all hosts.
-# Enable node exporter on ALL servers via bauer.services.monitoring.exporterOnly.
+# Enable node exporter on ALL servers via bauergroup.services.monitoring.exporterOnly.
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -12,10 +12,10 @@
   ...
 }:
 let
-  cfg = config.bauer.services.monitoring;
+  cfg = config.bauergroup.services.monitoring;
 in
 {
-  options.bauer.services.monitoring = {
+  options.bauergroup.services.monitoring = {
     enable = lib.mkEnableOption "Full monitoring stack (Prometheus + Grafana)";
 
     exporterOnly = lib.mkEnableOption "Only run node exporter (for scraped hosts)";
@@ -131,7 +131,7 @@ in
           (builtins.toJSON {
             groups = [
               {
-                name = "bauer-alerts";
+                name = "bauergroup-alerts";
                 rules = cfg.alertRules;
               }
             ];

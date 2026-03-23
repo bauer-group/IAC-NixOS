@@ -11,7 +11,7 @@
 # ─────────────────────────────────────────────────────────────────────
 { lib, ... }:
 {
-  options.bauer.params = {
+  options.bauergroup.params = {
     # ── Identity ──────────────────────────────────────────────────────
     hostName = lib.mkOption {
       type = lib.types.str;

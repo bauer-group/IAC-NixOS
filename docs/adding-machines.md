@@ -74,7 +74,7 @@ vim /etc/nixos/params.nix
 
 ```nix
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     # ── PFLICHT ──────────────────────────────
     hostName = "srv-prod-01";
 
@@ -93,7 +93,7 @@ vim /etc/nixos/params.nix
 #### Server
 
 ```nix
-bauer.params = {
+bauergroup.params = {
   # ... Pflichtfelder ...
 
   network = {
@@ -135,7 +135,7 @@ bauer.params = {
 #### Desktop (Development)
 
 ```nix
-bauer.params = {
+bauergroup.params = {
   # ... Pflichtfelder ...
 
   user.hashedPassword = "$6$rounds=100000$...";  # mkpasswd -m sha-512
@@ -150,7 +150,7 @@ bauer.params = {
 #### Desktop (Kiosk)
 
 ```nix
-bauer.params = {
+bauergroup.params = {
   # ... Pflichtfelder ...
 
   kiosk = {

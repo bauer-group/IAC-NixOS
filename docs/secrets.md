@@ -62,7 +62,7 @@ Die Secrets werden zur Laufzeit unter `/run/agenix/<name>` verfügbar. Referenzi
 ```nix
 # /etc/nixos/params.nix auf srv-prod-01
 { ... }: {
-  bauer.params = {
+  bauergroup.params = {
     hostName = "srv-prod-01";
     # ...
 

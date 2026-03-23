@@ -21,7 +21,7 @@
   ...
 }:
 let
-  params = config.bauer.params;
+  params = config.bauergroup.params;
   kiosk = params.kiosk;
   userParams = params.user;
 
@@ -103,7 +103,7 @@ in
   nixpkgs.config.allowUnfree = true;
 
   # ── Docker (backend services) ──────────────────────────────────────
-  bauer.services.docker = {
+  bauergroup.services.docker = {
     enable = true;
     enableOnBoot = true;
   };
@@ -142,7 +142,7 @@ in
   };
 
   # ── Monitoring (node exporter for fleet visibility) ────────────────
-  bauer.services.monitoring.exporterOnly = lib.mkDefault true;
+  bauergroup.services.monitoring.exporterOnly = lib.mkDefault true;
 
   # ── Networking ─────────────────────────────────────────────────────
   boot.kernel.sysctl."net.ipv6.conf.all.accept_ra" = lib.mkForce 1;

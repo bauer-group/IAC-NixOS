@@ -101,11 +101,11 @@
         );
 
       # ── Home Manager wiring ─────────────────────────────────────────
-      # Dynamically sets home-manager.users.<name> from bauer.params.user
+      # Dynamically sets home-manager.users.<name> from bauergroup.params.user
       homeManagerModule =
         { config, ... }:
         {
-          home-manager.users.${config.bauer.params.user.name} = import ./home/user.nix;
+          home-manager.users.${config.bauergroup.params.user.name} = import ./home/user.nix;
         };
 
       # ── Template builder ────────────────────────────────────────────

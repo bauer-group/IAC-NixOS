@@ -1,6 +1,6 @@
 # modules/baseline/users.nix
 # ─────────────────────────────────────────────────────────────────────
-# User account baseline — reads from bauer.params.user.
+# User account baseline — reads from bauergroup.params.user.
 # Creates the primary user with groups, SSH keys, and shell.
 # ─────────────────────────────────────────────────────────────────────
 {
@@ -10,7 +10,7 @@
   ...
 }:
 let
-  userParams = config.bauer.params.user;
+  userParams = config.bauergroup.params.user;
 in
 {
   # Don't allow imperative user management

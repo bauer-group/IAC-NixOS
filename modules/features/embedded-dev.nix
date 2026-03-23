@@ -4,7 +4,7 @@
 # Switches to latest kernel for newest CAN-Bus drivers.
 # Includes SocketCAN tooling, serial debug, cross-compilation support.
 #
-# Enable via: bauer.params.dev.embeddedDev = true (in params.nix)
+# Enable via: bauergroup.params.dev.embeddedDev = true (in params.nix)
 # ─────────────────────────────────────────────────────────────────────
 {
   config,
@@ -13,7 +13,7 @@
   ...
 }:
 let
-  cfg = config.bauer.params.dev.embeddedDev;
+  cfg = config.bauergroup.params.dev.embeddedDev;
 in
 {
   config = lib.mkIf cfg {

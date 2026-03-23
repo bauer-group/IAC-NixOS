@@ -1,12 +1,12 @@
 # modules/services/backup.nix
 # ─────────────────────────────────────────────────────────────────────
 # Restic backup with BAUER GROUP defaults.
-# Enable via: bauer.services.backup.enable = true;
+# Enable via: bauergroup.services.backup.enable = true;
 #
 # Prerequisites:
 #   1. Create restic repo password: agenix -e secrets/restic-password.age
 #   2. Initialize repo: restic -r sftp:backup@storage:/backups/$(hostname) init
-#   3. Set repository URL in bauer.services.backup.repository
+#   3. Set repository URL in bauergroup.services.backup.repository
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -15,10 +15,10 @@
   ...
 }:
 let
-  cfg = config.bauer.services.backup;
+  cfg = config.bauergroup.services.backup;
 in
 {
-  options.bauer.services.backup = {
+  options.bauergroup.services.backup = {
     enable = lib.mkEnableOption "Restic backup";
 
     repository = lib.mkOption {

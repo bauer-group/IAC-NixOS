@@ -13,7 +13,7 @@
   ...
 }:
 let
-  params = config.bauer.params;
+  params = config.bauergroup.params;
 in
 {
   imports = [
@@ -146,7 +146,7 @@ in
     ++ params.dev.extraPackages;
 
   # ── Docker (on-demand, not on boot) ────────────────────────────────
-  bauer.services.docker = {
+  bauergroup.services.docker = {
     enable = lib.mkDefault true;
     enableOnBoot = lib.mkDefault false;
   };

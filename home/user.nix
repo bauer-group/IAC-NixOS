@@ -1,7 +1,7 @@
 # home/user.nix
 # ─────────────────────────────────────────────────────────────────────
 # Parametric Home Manager configuration.
-# Reads user identity from bauer.params.user (passed via extraSpecialArgs).
+# Reads user identity from bauergroup.params.user (passed via extraSpecialArgs).
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -10,7 +10,7 @@
   ...
 }:
 let
-  userParams = osConfig.bauer.params.user;
+  userParams = osConfig.bauergroup.params.user;
 in
 {
   imports = [ ./common.nix ];

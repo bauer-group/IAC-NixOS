@@ -72,7 +72,7 @@ sudo nixos-rebuild switch --flake .#server --impure
          │                                  │
          ▼                                  ▼
 ┌─ modules/params.nix ─────────────────────────┐
-│  bauer.params.hostName, .user, .network, ... │
+│  bauergroup.params.hostName, .user, .network, ... │
 └──────────────────────────────────────────────┘
          │
          ▼

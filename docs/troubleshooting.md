@@ -53,7 +53,7 @@ vim /etc/nixos/params.nix
 sudo nixos-rebuild switch --flake .#server --impure
 ```
 
-### "error: The option 'bauer.params.hostName' is used but not defined"
+### "error: The option 'bauergroup.params.hostName' is used but not defined"
 
 Die `params.nix` setzt nicht alle Pflichtfelder:
 
@@ -72,10 +72,10 @@ cat /etc/nixos/params.nix
 ssh -v root@ZIEL_IP
 
 # SSH-Key muss in params.nix eingetragen sein:
-# bauer.params.user.sshKeys = [ "ssh-ed25519 AAAA..." ];
+# bauergroup.params.user.sshKeys = [ "ssh-ed25519 AAAA..." ];
 
 # Oder: Initial-Passwort setzen (temporär)
-# bauer.params.user.hashedPassword = "...";
+# bauergroup.params.user.hashedPassword = "...";
 ```
 
 ### "The option 'XXX' does not exist"
@@ -84,13 +84,13 @@ Template-Option wird nicht vom gewählten Template unterstützt:
 
 ```bash
 # Verfügbare Optionen anzeigen
-nixos-option bauer.params
-nixos-option bauer.services
+nixos-option bauergroup.params
+nixos-option bauergroup.services
 
 # Template prüfen: welches Template passt?
-# desktop-dev:   bauer.params.dev.*
-# desktop-kiosk: bauer.params.kiosk.*
-# server:        bauer.params.server.*
+# desktop-dev:   bauergroup.params.dev.*
+# desktop-kiosk: bauergroup.params.kiosk.*
+# server:        bauergroup.params.server.*
 ```
 
 ### Docker Compose Service startet nicht
@@ -212,9 +212,9 @@ builtins.attrNames (import ./overlays { nixpkgs-unstable = inputs.nixpkgs-unstab
 
 ```bash
 # Welche Optionen sind verfügbar?
-nixos-option bauer.params
-nixos-option bauer.params.user
-nixos-option bauer.services.docker
+nixos-option bauergroup.params
+nixos-option bauergroup.params.user
+nixos-option bauergroup.services.docker
 
 # Online: https://search.nixos.org/options
 ```
