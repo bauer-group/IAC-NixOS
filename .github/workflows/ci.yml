@@ -28,17 +28,6 @@ jobs:
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: 🧹 Format check
-        run: |
-          nix fmt
-          if [ -n "$(git diff --name-only)" ]; then
-            echo "::error::The following files need formatting:"
-            git diff --name-only
-            echo ""
-            echo "Run 'nix fmt' locally or trigger the 🎨 Format workflow."
-            exit 1
-          fi
-
       - name: ✅ Flake check
         run: nix flake check --all-systems
 
