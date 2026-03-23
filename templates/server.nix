@@ -23,6 +23,7 @@ in
     ../modules/baseline/users.nix
     ../modules/baseline/networking.nix
     ../modules/baseline/nix.nix
+    ../modules/baseline/auto-update.nix
     ../modules/services/docker.nix
     ../modules/services/monitoring.nix
     ../modules/services/backup.nix

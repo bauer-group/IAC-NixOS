@@ -96,6 +96,7 @@ sudo nixos-rebuild switch --flake .#server --impure
 | [Erste Schritte](docs/getting-started.md)      | Installation, erste Maschine einrichten      |
 | [Maschine hinzufügen](docs/adding-machines.md) | Neue Maschine mit Template provisionieren    |
 | [Deployment](docs/deployment.md)               | Deployment-Methoden und Workflows            |
+| [Automatisierung](docs/automation.md)          | Auto-Update, GC, Backup, Monitoring          |
 | [Secrets](docs/secrets.md)                     | agenix Setup, Secrets erstellen und rotieren |
 | [CAN-Bus](docs/canbus.md)                      | SocketCAN, USB-Adapter, can-utils            |
 | [Troubleshooting](docs/troubleshooting.md)     | Häufige Fehler und Lösungen                  |

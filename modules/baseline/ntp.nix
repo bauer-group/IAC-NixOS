@@ -14,12 +14,12 @@
   services.chrony = {
     enable = lib.mkDefault true;
 
-    # PTB (Physikalisch-Technische Bundesanstalt) + pool
+    # BAUER GROUP primary, de.pool.ntp.org as fallback
     servers = lib.mkDefault [
-      "ptbtime1.ptb.de"
-      "ptbtime2.ptb.de"
-      "ptbtime3.ptb.de"
-      "de.pool.ntp.org"
+      "time.bauer-group.com"
+      "0.de.pool.ntp.org"
+      "1.de.pool.ntp.org"
+      "2.de.pool.ntp.org"
     ];
 
     # Extra config: allow large initial correction, log stats

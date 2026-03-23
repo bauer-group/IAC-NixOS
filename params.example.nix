@@ -66,6 +66,18 @@
     # xkbLayout = "de";
 
     # ══════════════════════════════════════════════════════════════════
+    # AUTO-UPDATE — enabled by default for all machines
+    # ══════════════════════════════════════════════════════════════════
+    autoUpdate = {
+      enable = true;                                    # Pull latest config + packages daily
+      # flake = "github:bauer-group/IAC-NixOS";         # Source repo
+      # schedule = "03:00";                              # When to check
+      # allowReboot = true;                              # Reboot if kernel changed
+      # rebootWindowStart = "03:00";                     # Earliest reboot time
+      # rebootWindowEnd = "03:30";                       # Latest reboot time
+    };
+
+    # ══════════════════════════════════════════════════════════════════
     # TEMPLATE-SPECIFIC: desktop-dev
     # ══════════════════════════════════════════════════════════════════
     dev = {

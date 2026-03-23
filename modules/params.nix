@@ -268,6 +268,45 @@
       };
     };
 
+    # ── Auto-Update ────────────────────────────────────────────────────
+    autoUpdate = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Automatically pull latest config from Git and rebuild daily.";
+      };
+
+      flake = lib.mkOption {
+        type = lib.types.str;
+        default = "github:bauer-group/IAC-NixOS";
+        description = "Flake URI to pull updates from.";
+      };
+
+      schedule = lib.mkOption {
+        type = lib.types.str;
+        default = "03:00";
+        description = "Time to check for updates (24h format).";
+      };
+
+      allowReboot = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Allow automatic reboot when kernel or critical services change.";
+      };
+
+      rebootWindowStart = lib.mkOption {
+        type = lib.types.str;
+        default = "03:00";
+        description = "Earliest time for automatic reboot.";
+      };
+
+      rebootWindowEnd = lib.mkOption {
+        type = lib.types.str;
+        default = "03:30";
+        description = "Latest time for automatic reboot.";
+      };
+    };
+
     # ── Development-specific ──────────────────────────────────────────
     dev = {
       embeddedDev = lib.mkOption {
