@@ -40,9 +40,10 @@ sudo nixos-rebuild switch --flake .#server --impure
 ├── modules/
 │   ├── params.nix                 # Parametertypen + Validierung
 │   ├── baseline/                  # Geteilte Grundkonfiguration
+│   │   ├── auto-update.nix        #   Tägliches Auto-Update von GitHub
 │   │   ├── networking.nix         #   Firewall, DNS, IP (aus params)
 │   │   ├── nix.nix                #   Flakes, Caches, GC
-│   │   ├── ntp.nix                #   Chrony + PTB Zeitserver
+│   │   ├── ntp.nix                #   Chrony (time.bauer-group.com)
 │   │   ├── ssh.nix                #   Gehärtetes SSH (Ed25519-only)
 │   │   └── users.nix              #   User-Accounts (aus params)
 │   ├── features/                  # Opt-in Feature-Module
@@ -105,8 +106,7 @@ sudo nixos-rebuild switch --flake .#server --impure
 
 ```bash
 nix develop          # Dev-Shell mit allen Tools + Pre-Commit Hooks
-nix fmt              # Formatierung (nixfmt, prettier, shfmt, yamlfmt)
-nix flake check      # Linting (statix, deadnix) + Formatierung
+nix fmt              # Formatierung (nixfmt, prettier, shfmt)
 ```
 
 ## Lizenz
