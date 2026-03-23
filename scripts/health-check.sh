@@ -19,7 +19,7 @@ FAILURES=0
 check() {
   local name="$1"
   shift
-  if ssh "root@${HOST}" "$@" > /dev/null 2>&1; then
+  if ssh "root@${HOST}" "$@" >/dev/null 2>&1; then
     echo -e "  ${GREEN}✓${NC} ${name}"
   else
     echo -e "  ${RED}✗${NC} ${name}"
@@ -60,7 +60,7 @@ check "Root filesystem < 85% full" "test \$(df / --output=pcent | tail -1 | tr -
 # ── Docker ────────────────────────────────────
 echo ""
 echo "Docker:"
-if ssh "root@${HOST}" "systemctl is-active docker.service" > /dev/null 2>&1; then
+if ssh "root@${HOST}" "systemctl is-active docker.service" >/dev/null 2>&1; then
   check "Docker running" "docker info > /dev/null 2>&1"
   CONTAINERS=$(ssh "root@${HOST}" "docker ps -q 2>/dev/null | wc -l" 2>/dev/null || echo "0")
   echo -e "  Containers running: ${CONTAINERS}"
@@ -77,7 +77,7 @@ check "DNS resolving" "host nixos.org > /dev/null 2>&1"
 # ── Monitoring ────────────────────────────────
 echo ""
 echo "Monitoring:"
-if ssh "root@${HOST}" "systemctl is-active prometheus-node-exporter.service" > /dev/null 2>&1; then
+if ssh "root@${HOST}" "systemctl is-active prometheus-node-exporter.service" >/dev/null 2>&1; then
   check "Node exporter responding" "curl -sf http://localhost:9100/metrics > /dev/null"
 else
   echo -e "  ${YELLOW}-${NC} Node exporter not enabled"

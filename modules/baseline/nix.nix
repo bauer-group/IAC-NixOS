@@ -3,11 +3,15 @@
 # Nix daemon & store settings baseline.
 # Flakes enabled, garbage collection, binary caches.
 # ─────────────────────────────────────────────────────────────────────
-{ lib, pkgs, ... }: {
+{ lib, pkgs, ... }:
+{
 
   # Enable Flakes and new CLI
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
 
     # Binary caches
     substituters = [
@@ -20,7 +24,10 @@
     ];
 
     # Trust users in wheel group
-    trusted-users = [ "root" "@wheel" ];
+    trusted-users = [
+      "root"
+      "@wheel"
+    ];
 
     # Auto-optimise store (deduplication via hard links)
     auto-optimise-store = true;

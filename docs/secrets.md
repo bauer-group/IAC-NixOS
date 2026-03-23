@@ -122,13 +122,13 @@ nixos-rebuild switch --flake .#server --impure
 
 ## Häufige Secrets
 
-| Secret | Datei | Wer braucht es |
-| --- | --- | --- |
-| User-Passwort | `user-password.age` | Alle Maschinen |
-| Restic Backup | `restic-password.age` | Server mit Backup |
-| Docker .env | `webapp-env.age` | Server mit diesem Compose-Projekt |
-| Grafana Admin | `grafana-password.age` | Monitoring-Server |
-| Wireguard Key | `wireguard-private.age` | VPN-Teilnehmer |
+| Secret        | Datei                   | Wer braucht es                    |
+| ------------- | ----------------------- | --------------------------------- |
+| User-Passwort | `user-password.age`     | Alle Maschinen                    |
+| Restic Backup | `restic-password.age`   | Server mit Backup                 |
+| Docker .env   | `webapp-env.age`        | Server mit diesem Compose-Projekt |
+| Grafana Admin | `grafana-password.age`  | Monitoring-Server                 |
+| Wireguard Key | `wireguard-private.age` | VPN-Teilnehmer                    |
 
 ## Troubleshooting
 

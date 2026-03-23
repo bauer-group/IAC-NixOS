@@ -19,15 +19,14 @@ in
   users.users.${userParams.name} = {
     isNormalUser = true;
     description = userParams.fullName;
-    extraGroups =
-      [
-        "wheel" # sudo
-        "networkmanager"
-        "docker"
-        "dialout" # serial / CAN-Bus USB adapters
-        "plugdev" # USB devices
-      ]
-      ++ userParams.extraGroups;
+    extraGroups = [
+      "wheel" # sudo
+      "networkmanager"
+      "docker"
+      "dialout" # serial / CAN-Bus USB adapters
+      "plugdev" # USB devices
+    ]
+    ++ userParams.extraGroups;
 
     openssh.authorizedKeys.keys = userParams.sshKeys;
 

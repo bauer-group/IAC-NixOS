@@ -5,11 +5,11 @@ Drei Templates, eine Parameterdatei pro Maschine — fertig.
 
 ## Templates
 
-| Template | Befehl | Beschreibung |
-|----------|--------|-------------|
-| `desktop-dev` | `nixos-rebuild switch --flake .#desktop-dev --impure` | Entwickler-Desktop (KDE Plasma 6, Dev-Tools, optional CAN-Bus) |
-| `desktop-kiosk` | `nixos-rebuild switch --flake .#desktop-kiosk --impure` | Kiosk-Display (Fullscreen-Browser + Docker-Backend) |
-| `server` | `nixos-rebuild switch --flake .#server --impure` | Headless Server (Docker-Services, gehärtet, Monitoring) |
+| Template        | Befehl                                                  | Beschreibung                                                   |
+| --------------- | ------------------------------------------------------- | -------------------------------------------------------------- |
+| `desktop-dev`   | `nixos-rebuild switch --flake .#desktop-dev --impure`   | Entwickler-Desktop (KDE Plasma 6, Dev-Tools, optional CAN-Bus) |
+| `desktop-kiosk` | `nixos-rebuild switch --flake .#desktop-kiosk --impure` | Kiosk-Display (Fullscreen-Browser + Docker-Backend)            |
+| `server`        | `nixos-rebuild switch --flake .#server --impure`        | Headless Server (Docker-Services, gehärtet, Monitoring)        |
 
 ## Quickstart
 
@@ -91,14 +91,14 @@ sudo nixos-rebuild switch --flake .#server --impure
 
 ## Dokumentation
 
-| Dokument | Inhalt |
-|----------|--------|
-| [Erste Schritte](docs/getting-started.md) | Installation, erste Maschine einrichten |
-| [Maschine hinzufügen](docs/adding-machines.md) | Neue Maschine mit Template provisionieren |
-| [Deployment](docs/deployment.md) | Deployment-Methoden und Workflows |
-| [Secrets](docs/secrets.md) | agenix Setup, Secrets erstellen und rotieren |
-| [CAN-Bus](docs/canbus.md) | SocketCAN, USB-Adapter, can-utils |
-| [Troubleshooting](docs/troubleshooting.md) | Häufige Fehler und Lösungen |
+| Dokument                                       | Inhalt                                       |
+| ---------------------------------------------- | -------------------------------------------- |
+| [Erste Schritte](docs/getting-started.md)      | Installation, erste Maschine einrichten      |
+| [Maschine hinzufügen](docs/adding-machines.md) | Neue Maschine mit Template provisionieren    |
+| [Deployment](docs/deployment.md)               | Deployment-Methoden und Workflows            |
+| [Secrets](docs/secrets.md)                     | agenix Setup, Secrets erstellen und rotieren |
+| [CAN-Bus](docs/canbus.md)                      | SocketCAN, USB-Adapter, can-utils            |
+| [Troubleshooting](docs/troubleshooting.md)     | Häufige Fehler und Lösungen                  |
 
 ## Code-Qualität
 

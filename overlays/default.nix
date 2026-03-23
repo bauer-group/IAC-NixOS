@@ -1,3 +1,4 @@
-{ nixpkgs-unstable }: {
+{ nixpkgs-unstable }:
+{
   unstable = import ./unstable.nix nixpkgs-unstable;
 }

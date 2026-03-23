@@ -2,13 +2,14 @@
 # ─────────────────────────────────────────────────────────────────────
 # Shared Home Manager settings for all users.
 # ─────────────────────────────────────────────────────────────────────
-{ lib, pkgs, ... }: {
+{ lib, pkgs, ... }:
+{
 
   # ── Git ──────────────────────────────────────────────────────────
   programs.git = {
     enable = true;
     lfs.enable = true;
-    delta.enable = true;  # Better diff viewer
+    delta.enable = true; # Better diff viewer
     extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = true;

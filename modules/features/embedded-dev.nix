@@ -115,11 +115,13 @@
     can-utils
 
     # ── Python CAN ─────────────────────────────────────────────────
-    (python3.withPackages (ps: with ps; [
-      python-can
-      cantools
-      udsoncan
-    ]))
+    (python3.withPackages (
+      ps: with ps; [
+        python-can
+        cantools
+        udsoncan
+      ]
+    ))
 
     # ── Serial / Debug ─────────────────────────────────────────────
     minicom

@@ -31,15 +31,15 @@ sudo nixos-rebuild switch --flake .#desktop-dev --impure
 
 ## USB-Adapter Support
 
-| Adapter | Kernel-Modul | USB ID |
-| --- | --- | --- |
-| PEAK-System PCAN-USB | `peak_usb` | `0c72:*` |
-| candleLight / canable | `gs_usb` | `1d50:606f` |
-| Kvaser USB | `kvaser_usb` | `0bfd:*` |
-| USBtin / LAWICEL | `slcan` | (seriell) |
-| EMS CPC-USB | `ems_usb` | |
-| USB2CAN (8 Devices) | `usb_8dev` | |
-| Microchip CAN Analyzer | `mcba_usb` | |
+| Adapter                | Kernel-Modul | USB ID      |
+| ---------------------- | ------------ | ----------- |
+| PEAK-System PCAN-USB   | `peak_usb`   | `0c72:*`    |
+| candleLight / canable  | `gs_usb`     | `1d50:606f` |
+| Kvaser USB             | `kvaser_usb` | `0bfd:*`    |
+| USBtin / LAWICEL       | `slcan`      | (seriell)   |
+| EMS CPC-USB            | `ems_usb`    |             |
+| USB2CAN (8 Devices)    | `usb_8dev`   |             |
+| Microchip CAN Analyzer | `mcba_usb`   |             |
 
 Alle Adapter werden automatisch erkannt. udev-Regeln setzen `MODE=0666` für die `plugdev`-Gruppe.
 

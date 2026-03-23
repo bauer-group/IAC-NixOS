@@ -1,4 +1,5 @@
-{ ... }: {
+{ ... }:
+{
   # Nix code formatting (RFC-style, officially adopted by the Nix community)
   programs.nixfmt.enable = true;
 
