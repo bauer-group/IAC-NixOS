@@ -1,3 +1,9 @@
+## [1.1.5](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.4...v1.1.5) (2026-03-23)
+
+### ♻️ Refactoring
+
+* restructured Nix configs and linting ([e3d68ed](https://github.com/bauer-group/IAC-NixOS/commit/e3d68ed1df36408a38797e1a87a0f77dc9628cc6))
+
 ## [1.1.4](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.3...v1.1.4) (2026-03-23)
 
 ### ♻️ Refactoring
