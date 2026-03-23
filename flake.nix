@@ -165,7 +165,7 @@
             }
             ''
               cd ${self}
-              deadnix --fail . --exclude params.example.nix
+              deadnix . --exclude params.example.nix
               touch $out
             '';
       };

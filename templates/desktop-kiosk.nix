@@ -25,14 +25,6 @@ let
   kiosk = params.kiosk;
   userParams = params.user;
 
-  # Script to reset browser on idle (if configured)
-  idleResetScript = pkgs.writeShellScript "kiosk-idle-reset" ''
-    while true; do
-      ${pkgs.xdotool}/bin/xdotool key F5
-      sleep ${toString kiosk.idleTimeout}
-    done
-  '';
-
   # Chromium kiosk launch command
   kioskCommand = pkgs.writeShellScript "kiosk-browser" ''
     # Wait for network
