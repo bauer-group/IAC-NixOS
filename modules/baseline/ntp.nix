@@ -4,7 +4,8 @@
 # Uses chrony (modern, accurate, handles VM clock drift well).
 # All values use mkDefault so hosts can override if needed.
 # ─────────────────────────────────────────────────────────────────────
-{ lib, ... }: {
+{ lib, ... }:
+{
 
   # Disable systemd-timesyncd (conflicts with chrony)
   services.timesyncd.enable = lib.mkDefault false;

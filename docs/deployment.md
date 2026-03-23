@@ -2,10 +2,10 @@
 
 ## Deployment-Methoden
 
-| Methode | Wann nutzen | Rollback |
-| --- | --- | --- |
-| `nixos-rebuild` | Einzelne Maschine, lokal oder remote | Boot-Menü oder `--rollback` |
-| `nixos-anywhere` | Neue Maschine von Grund auf provisionieren | Neuinstallation |
+| Methode          | Wann nutzen                                | Rollback                    |
+| ---------------- | ------------------------------------------ | --------------------------- |
+| `nixos-rebuild`  | Einzelne Maschine, lokal oder remote       | Boot-Menü oder `--rollback` |
+| `nixos-anywhere` | Neue Maschine von Grund auf provisionieren | Neuinstallation             |
 
 ## nixos-rebuild (Standard)
 

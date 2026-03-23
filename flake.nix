@@ -124,10 +124,13 @@
         templatePath:
         nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
-          modules = baseModules ++ machineModules ++ [
-            templatePath
-            homeManagerModule
-          ];
+          modules =
+            baseModules
+            ++ machineModules
+            ++ [
+              templatePath
+              homeManagerModule
+            ];
         };
 
       # ── Formatting ──────────────────────────────────────────────────
@@ -164,17 +167,20 @@
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
         pre-commit = pre-commit-check;
-        lint = pkgs.runCommand "lint" {
-          nativeBuildInputs = with pkgs; [
-            statix
-            deadnix
-          ];
-        } ''
-          cd ${self}
-          statix check .
-          deadnix --fail .
-          touch $out
-        '';
+        lint =
+          pkgs.runCommand "lint"
+            {
+              nativeBuildInputs = with pkgs; [
+                statix
+                deadnix
+              ];
+            }
+            ''
+              cd ${self}
+              statix check .
+              deadnix --fail .
+              touch $out
+            '';
       };
 
       # ── Dev Shell ───────────────────────────────────────────────────

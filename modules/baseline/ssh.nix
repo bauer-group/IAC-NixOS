@@ -2,7 +2,8 @@
 # ─────────────────────────────────────────────────────────────────────
 # Hardened SSH baseline for all machines.
 # ─────────────────────────────────────────────────────────────────────
-{ lib, ... }: {
+{ lib, ... }:
+{
 
   services.openssh = {
     enable = lib.mkDefault true;
@@ -26,7 +27,10 @@
 
     # Disable host key types we don't need
     hostKeys = [
-      { path = "/etc/ssh/ssh_host_ed25519_key"; type = "ed25519"; }
+      {
+        path = "/etc/ssh/ssh_host_ed25519_key";
+        type = "ed25519";
+      }
     ];
   };
 
