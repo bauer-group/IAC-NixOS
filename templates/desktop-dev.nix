@@ -23,8 +23,8 @@ in
     ../modules/baseline/networking.nix
     ../modules/baseline/nix.nix
     ../modules/services/docker.nix
-  ]
-  ++ lib.optional params.dev.embeddedDev ../modules/features/embedded-dev.nix;
+    ../modules/features/embedded-dev.nix
+  ];
 
   # ── Boot ────────────────────────────────────────────────────────────
   boot.loader.systemd-boot = lib.mkIf (params.boot.loader == "systemd-boot") {
