@@ -28,29 +28,8 @@ jobs:
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: ✅ Flake check
-        run: nix flake check --all-systems
+      - name: 🧹 Formatting
+        run: nix build .#checks.x86_64-linux.formatting --no-link
 
-  build:
-    name: 🔨 Build ${{ matrix.template }}
-    runs-on: ubuntu-latest
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        template:
-          - desktop-dev
-          - desktop-kiosk
-          - server
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: ❄️ Install Nix
-        uses: cachix/install-nix-action@v30
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            accept-flake-config = true
-
-      - name: 📦 Build ${{ matrix.template }}
-        run: nix build .#nixosConfigurations.${{ matrix.template }}.config.system.build.toplevel --no-link
+      - name: 🔎 Linting (statix + deadnix)
+        run: nix build .#checks.x86_64-linux.lint --no-link

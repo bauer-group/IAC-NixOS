@@ -29,8 +29,6 @@
       # Log time tracking statistics
       logdir /var/log/chrony
       log tracking measurements statistics
-      # RTC synchronisation (bare metal only, ignored in VMs)
-      rtcsync
     '';
   };
 

@@ -92,24 +92,13 @@
 
       # Machine-local params + hardware config (requires --impure)
       machineModules =
-        if builtins.pathExists /etc/nixos/params.nix then
-          [ /etc/nixos/params.nix ]
-          ++ (
-            if builtins.pathExists /etc/nixos/hardware-configuration.nix then
-              [ /etc/nixos/hardware-configuration.nix ]
-            else
-              [ ]
-          )
-        else
-          [
-            # CI / pure evaluation fallback: provide dummy params
-            {
-              bauer.params = {
-                hostName = "ci-eval";
-                user.name = "ci";
-              };
-            }
-          ];
+        [ /etc/nixos/params.nix ]
+        ++ (
+          if builtins.pathExists /etc/nixos/hardware-configuration.nix then
+            [ /etc/nixos/hardware-configuration.nix ]
+          else
+            [ ]
+        );
 
       # ── Home Manager wiring ─────────────────────────────────────────
       # Dynamically sets home-manager.users.<name> from bauer.params.user
