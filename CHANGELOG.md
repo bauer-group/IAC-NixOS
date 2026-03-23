@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.6...v1.2.0) (2026-03-23)
+
+### 🚀 Features
+
+* **auto-update:** added configurable auto-update system ([c8e4be6](https://github.com/bauer-group/IAC-NixOS/commit/c8e4be695e437bc4efe8ab7e9a7355875623dc53))
+
 ## [1.1.6](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.5...v1.1.6) (2026-03-23)
 
 ### ♻️ Refactoring
