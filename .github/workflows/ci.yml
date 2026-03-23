@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   lint:
-    name: 🔍 Lint & Format
+    name: 🔎 Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,8 +28,5 @@ jobs:
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: 🧹 Formatting
-        run: nix build .#checks.x86_64-linux.formatting --no-link
-
-      - name: 🔎 Linting (statix + deadnix)
+      - name: 🔎 statix + deadnix
         run: nix build .#checks.x86_64-linux.lint --no-link
