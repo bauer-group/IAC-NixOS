@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.1...v1.1.2) (2026-03-23)
+
+### ♻️ Refactoring
+
+* **embedded-dev:** made feature conditional ([6b7c90f](https://github.com/bauer-group/IAC-NixOS/commit/6b7c90fb94849b8d094961a78c951afabb16fe42))
+
 ## [1.1.1](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.0...v1.1.1) (2026-03-23)
 
 ### 🐛 Bug Fixes
