@@ -1,3 +1,9 @@
+## [1.1.4](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.3...v1.1.4) (2026-03-23)
+
+### ♻️ Refactoring
+
+* **ci:** simplified CI and removed configuration fallbacks ([44d14aa](https://github.com/bauer-group/IAC-NixOS/commit/44d14aadb391ef2a6e51c7ab6d2cebd67c1f6746))
+
 ## [1.1.3](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.2...v1.1.3) (2026-03-23)
 
 ### 🐛 Bug Fixes
