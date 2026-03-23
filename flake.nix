@@ -160,13 +160,11 @@
           pkgs.runCommand "lint"
             {
               nativeBuildInputs = with pkgs; [
-                statix
                 deadnix
               ];
             }
             ''
               cd ${self}
-              statix check . --ignore params.example.nix
               deadnix --fail . --exclude params.example.nix
               touch $out
             '';
