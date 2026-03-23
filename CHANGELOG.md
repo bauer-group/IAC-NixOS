@@ -1,3 +1,9 @@
+## [1.1.6](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.5...v1.1.6) (2026-03-23)
+
+### ♻️ Refactoring
+
+* remove unused code and parameters ([ce0d96b](https://github.com/bauer-group/IAC-NixOS/commit/ce0d96bee6c2bbc272315af0771327b22cafa6e7))
+
 ## [1.1.5](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.4...v1.1.5) (2026-03-23)
 
 ### ♻️ Refactoring
