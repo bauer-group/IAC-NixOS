@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.0...v1.1.1) (2026-03-23)
+
+### 🐛 Bug Fixes
+
+* **ci:** changed nix fmt check flag to CI mode ([ac9e649](https://github.com/bauer-group/IAC-NixOS/commit/ac9e649e9ad7c27f996d291c0ead9fbc05f9711e))
+* **ci:** exclude workflow files from formatting ([aa726e9](https://github.com/bauer-group/IAC-NixOS/commit/aa726e9b25c6a5814619b599bc427aa02ebcf112))
+
 ## [1.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.0.0...v1.1.0) (2026-03-22)
 
 ### 🚀 Features
