@@ -16,7 +16,7 @@ in
   networking.hostName = params.hostName;
 
   # ── IP configuration ───────────────────────────────────────────────
-  networking.useDHCP = net.useDHCP;
+  networking.useDHCP = lib.mkDefault net.useDHCP;
   networking.interfaces.${net.interface} = lib.mkIf (!net.useDHCP) {
     ipv4.addresses = [
       {

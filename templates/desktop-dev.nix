@@ -57,6 +57,7 @@ in
 
   # ── Networking (Desktop uses NetworkManager) ───────────────────────
   networking.networkmanager.enable = lib.mkDefault true;
+  networking.useDHCP = lib.mkForce false; # NetworkManager handles networking
   boot.kernel.sysctl."net.ipv6.conf.all.accept_ra" = lib.mkForce 1;
 
   # ── Fonts ──────────────────────────────────────────────────────────
