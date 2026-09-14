@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [3.0.1](https://github.com/bauer-group/IAC-NixOS/compare/v3.0.0...v3.0.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* **monitoring:** refused empty Grafana secret keys ([a25c1c4](https://github.com/bauer-group/IAC-NixOS/commit/a25c1c4332bb649e9d84ae02d50147429f84c82c))
+
+### 🔧 Maintenance
+
+* **treefmt:** excluded generated changelog ([f53de8b](https://github.com/bauer-group/IAC-NixOS/commit/f53de8bbf38dea8e9ff5a0b6a7df212a35a62067))
+
 ## [3.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v2.0.0...v3.0.0) (2026-09-14)
 
 ### ⚠ BREAKING CHANGES
