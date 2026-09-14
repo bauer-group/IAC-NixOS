@@ -91,14 +91,15 @@
       ];
 
       # Machine-local params + hardware config (requires --impure)
-      machineModules =
-        [ /etc/nixos/params.nix ]
-        ++ (
-          if builtins.pathExists /etc/nixos/hardware-configuration.nix then
-            [ /etc/nixos/hardware-configuration.nix ]
-          else
-            [ ]
-        );
+      machineModules = [
+        /etc/nixos/params.nix
+      ]
+      ++ (
+        if builtins.pathExists /etc/nixos/hardware-configuration.nix then
+          [ /etc/nixos/hardware-configuration.nix ]
+        else
+          [ ]
+      );
 
       # ── Home Manager wiring ─────────────────────────────────────────
       # Dynamically sets home-manager.users.<name> from bauergroup.params.user

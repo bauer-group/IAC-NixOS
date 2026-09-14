@@ -69,7 +69,7 @@
     # AUTO-UPDATE — enabled by default for all machines
     # ══════════════════════════════════════════════════════════════════
     autoUpdate = {
-      enable = true;                                    # Pull latest config + packages daily
+      enable = true; # Pull latest config + packages daily
       # flake = "github:bauer-group/IAC-NixOS";         # Source repo
       # schedule = "03:00";                              # When to check
       # allowReboot = true;                              # Reboot if kernel changed

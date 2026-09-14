@@ -10,29 +10,27 @@
 pkgs.testers.nixosTest {
   name = "firewall";
 
-  nodes.server =
-    _:
-    {
-      imports = [
-        ../modules/baseline/networking.nix
-        ../modules/baseline/nix.nix
-        ../modules/params.nix
-      ];
+  nodes.server = _: {
+    imports = [
+      ../modules/baseline/networking.nix
+      ../modules/baseline/nix.nix
+      ../modules/params.nix
+    ];
 
-      # Provide required params for networking module
-      bauergroup.params = {
-        hostName = "test-firewall";
-        network = {
-          useDHCP = true;
-          openPorts = [
-            80
-            443
-          ];
-        };
+    # Provide required params for networking module
+    bauergroup.params = {
+      hostName = "test-firewall";
+      network = {
+        useDHCP = true;
+        openPorts = [
+          80
+          443
+        ];
       };
-
-      users.mutableUsers = true;
     };
+
+    users.mutableUsers = true;
+  };
 
   testScript = ''
     server.wait_for_unit("firewall.service")

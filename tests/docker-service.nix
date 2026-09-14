@@ -10,17 +10,15 @@
 pkgs.testers.nixosTest {
   name = "docker-service";
 
-  nodes.server =
-    _:
-    {
-      imports = [
-        ../modules/services/docker.nix
-        ../modules/baseline/nix.nix
-      ];
+  nodes.server = _: {
+    imports = [
+      ../modules/services/docker.nix
+      ../modules/baseline/nix.nix
+    ];
 
-      bauergroup.services.docker.enable = true;
-      users.mutableUsers = true;
-    };
+    bauergroup.services.docker.enable = true;
+    users.mutableUsers = true;
+  };
 
   testScript = ''
     server.wait_for_unit("docker.service")

@@ -6,24 +6,24 @@ Jede Maschine fuehrt automatisch folgende Prozesse aus:
 
 ### Auf jeder Maschine
 
-| Prozess | Zeitpunkt | Was passiert |
-| --- | --- | --- |
-| **Auto-Update** | Taeglich 03:00 | Pulled neueste Config + Pakete von GitHub, rebuild, reboot bei Bedarf |
-| **Nix Garbage Collection** | Woechentlich | Loescht unbenutzte Pakete aelter als 7 Tage |
-| **Docker Auto-Prune** | Woechentlich | Entfernt unbenutzte Docker Images aelter als 7 Tage |
-| **Restic Backup** | Taeglich (wenn aktiviert) | Sichert /opt, /var/lib, /home auf Backup-Server |
-| **Chrony NTP** | Permanent | Zeitsynchronisation mit time.bauer-group.com |
-| **Fail2ban** | Permanent | Blockiert SSH Brute-Force (5 Versuche → 1h Ban) |
+| Prozess                    | Zeitpunkt                 | Was passiert                                                          |
+| -------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| **Auto-Update**            | Taeglich 03:00            | Pulled neueste Config + Pakete von GitHub, rebuild, reboot bei Bedarf |
+| **Nix Garbage Collection** | Woechentlich              | Loescht unbenutzte Pakete aelter als 7 Tage                           |
+| **Docker Auto-Prune**      | Woechentlich              | Entfernt unbenutzte Docker Images aelter als 7 Tage                   |
+| **Restic Backup**          | Taeglich (wenn aktiviert) | Sichert /opt, /var/lib, /home auf Backup-Server                       |
+| **Chrony NTP**             | Permanent                 | Zeitsynchronisation mit time.bauer-group.com                          |
+| **Fail2ban**               | Permanent                 | Blockiert SSH Brute-Force (5 Versuche → 1h Ban)                       |
 
 ### In GitHub (CI/CD)
 
-| Prozess | Zeitpunkt | Was passiert |
-| --- | --- | --- |
-| **🧹 CI** | Bei Push/PR auf main | Linting (deadnix) |
-| **🎨 Format** | Manuell | Formatiert alle .nix Dateien |
-| **🔄 Flake Update** | Sonntag 02:00 UTC | Erstellt PR mit aktualisierten Paketversionen |
-| **🚀 Release** | Bei Push auf main | Semantic Versioning + Changelog |
-| **📢 Teams** | Bei Events | Benachrichtigungen an Microsoft Teams |
+| Prozess             | Zeitpunkt            | Was passiert                                  |
+| ------------------- | -------------------- | --------------------------------------------- |
+| **🧹 CI**           | Bei Push/PR auf main | Linting (deadnix)                             |
+| **🎨 Format**       | Manuell              | Formatiert alle .nix Dateien                  |
+| **🔄 Flake Update** | Sonntag 02:00 UTC    | Erstellt PR mit aktualisierten Paketversionen |
+| **🚀 Release**      | Bei Push auf main    | Semantic Versioning + Changelog               |
+| **📢 Teams**        | Bei Events           | Benachrichtigungen an Microsoft Teams         |
 
 ## Auto-Update
 
@@ -239,16 +239,16 @@ GitHub Actions → 🔄 Flake Update → Run workflow
 
 ### Was wird aktualisiert?
 
-| Input | Channel | Was aendert sich |
-| --- | --- | --- |
-| nixpkgs | nixos-26.05 | Sicherheitspatches, Bugfixes, Paketversionen |
-| nixpkgs-unstable | nixos-unstable | Bleeding-edge Pakete (nur via pkgs.unstable.*) |
-| home-manager | release-26.05 | User-Config Module |
-| agenix | latest | Secrets Management |
-| disko | latest | Disk Partitioning |
-| colmena | latest | Fleet Deployment |
-| treefmt-nix | latest | Code Formatter |
-| git-hooks-nix | latest | Pre-Commit Hooks |
+| Input            | Channel        | Was aendert sich                                |
+| ---------------- | -------------- | ----------------------------------------------- |
+| nixpkgs          | nixos-26.05    | Sicherheitspatches, Bugfixes, Paketversionen    |
+| nixpkgs-unstable | nixos-unstable | Bleeding-edge Pakete (nur via pkgs.unstable.\*) |
+| home-manager     | release-26.05  | User-Config Module                              |
+| agenix           | latest         | Secrets Management                              |
+| disko            | latest         | Disk Partitioning                               |
+| colmena          | latest         | Fleet Deployment                                |
+| treefmt-nix      | latest         | Code Formatter                                  |
+| git-hooks-nix    | latest         | Pre-Commit Hooks                                |
 
 ## Gesamter Update-Zyklus
 

@@ -10,21 +10,19 @@
 pkgs.testers.nixosTest {
   name = "ssh-hardening";
 
-  nodes.server =
-    _:
-    {
-      imports = [
-        ../modules/baseline/ssh.nix
-        ../modules/baseline/nix.nix
-      ];
+  nodes.server = _: {
+    imports = [
+      ../modules/baseline/ssh.nix
+      ../modules/baseline/nix.nix
+    ];
 
-      users.users.testuser = {
-        isNormalUser = true;
-        initialPassword = "test";
-        extraGroups = [ "wheel" ];
-      };
-      users.mutableUsers = true;
+    users.users.testuser = {
+      isNormalUser = true;
+      initialPassword = "test";
+      extraGroups = [ "wheel" ];
     };
+    users.mutableUsers = true;
+  };
 
   testScript = ''
     server.wait_for_unit("sshd.service")

@@ -2,48 +2,48 @@
 
 ### ⚠ BREAKING CHANGES
 
-* **namespace:** Existing nixos configurations using `bauer.params` must be
-updated to use `bauergroup.params` and all references updated accordingly.
+- **namespace:** Existing nixos configurations using `bauer.params` must be
+  updated to use `bauergroup.params` and all references updated accordingly.
 
 ### ♻️ Refactoring
 
-* **namespace:** renamed module namespace from bauer to bauergroup ([954c5b0](https://github.com/bauer-group/IAC-NixOS/commit/954c5b0b87303840d71770d259884b97931471b4))
+- **namespace:** renamed module namespace from bauer to bauergroup ([954c5b0](https://github.com/bauer-group/IAC-NixOS/commit/954c5b0b87303840d71770d259884b97931471b4))
 
 ## [1.2.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.6...v1.2.0) (2026-03-23)
 
 ### 🚀 Features
 
-* **auto-update:** added configurable auto-update system ([c8e4be6](https://github.com/bauer-group/IAC-NixOS/commit/c8e4be695e437bc4efe8ab7e9a7355875623dc53))
+- **auto-update:** added configurable auto-update system ([c8e4be6](https://github.com/bauer-group/IAC-NixOS/commit/c8e4be695e437bc4efe8ab7e9a7355875623dc53))
 
 ## [1.1.6](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.5...v1.1.6) (2026-03-23)
 
 ### ♻️ Refactoring
 
-* remove unused code and parameters ([ce0d96b](https://github.com/bauer-group/IAC-NixOS/commit/ce0d96bee6c2bbc272315af0771327b22cafa6e7))
+- remove unused code and parameters ([ce0d96b](https://github.com/bauer-group/IAC-NixOS/commit/ce0d96bee6c2bbc272315af0771327b22cafa6e7))
 
 ## [1.1.5](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.4...v1.1.5) (2026-03-23)
 
 ### ♻️ Refactoring
 
-* restructured Nix configs and linting ([e3d68ed](https://github.com/bauer-group/IAC-NixOS/commit/e3d68ed1df36408a38797e1a87a0f77dc9628cc6))
+- restructured Nix configs and linting ([e3d68ed](https://github.com/bauer-group/IAC-NixOS/commit/e3d68ed1df36408a38797e1a87a0f77dc9628cc6))
 
 ## [1.1.4](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.3...v1.1.4) (2026-03-23)
 
 ### ♻️ Refactoring
 
-* **ci:** simplified CI and removed configuration fallbacks ([44d14aa](https://github.com/bauer-group/IAC-NixOS/commit/44d14aadb391ef2a6e51c7ab6d2cebd67c1f6746))
+- **ci:** simplified CI and removed configuration fallbacks ([44d14aa](https://github.com/bauer-group/IAC-NixOS/commit/44d14aadb391ef2a6e51c7ab6d2cebd67c1f6746))
 
 ## [1.1.3](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.2...v1.1.3) (2026-03-23)
 
 ### 🐛 Bug Fixes
 
-* **networking:** fixed DHCP configuration module precedence ([8aacd64](https://github.com/bauer-group/IAC-NixOS/commit/8aacd64d6027ccd9a1efcc0993efaa6bd88274fe))
+- **networking:** fixed DHCP configuration module precedence ([8aacd64](https://github.com/bauer-group/IAC-NixOS/commit/8aacd64d6027ccd9a1efcc0993efaa6bd88274fe))
 
 ## [1.1.2](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.1...v1.1.2) (2026-03-23)
 
 ### ♻️ Refactoring
 
-* **embedded-dev:** made feature conditional ([6b7c90f](https://github.com/bauer-group/IAC-NixOS/commit/6b7c90fb94849b8d094961a78c951afabb16fe42))
+- **embedded-dev:** made feature conditional ([6b7c90f](https://github.com/bauer-group/IAC-NixOS/commit/6b7c90fb94849b8d094961a78c951afabb16fe42))
 
 ## [1.1.1](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.0...v1.1.1) (2026-03-23)
 
