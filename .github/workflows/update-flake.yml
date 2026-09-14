@@ -51,6 +51,8 @@ jobs:
         if: steps.changelog.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
+          # GITHUB_TOKEN may not open PRs here, and its pushes would not trigger CI
+          token: ${{ secrets.PAT_READWRITE_ORGANISATION }}
           commit-message: "chore(deps): weekly flake input update"
           title: "🔄 Weekly Flake Update"
           body: ${{ steps.changelog.outputs.body }}
