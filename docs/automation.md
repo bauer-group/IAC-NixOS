@@ -52,7 +52,7 @@ Auto-Update ist **standardmaessig aktiviert** fuer alle Maschinen. In `/etc/nixo
 ```nix
 bauergroup.params.autoUpdate = {
   enable = true;                                      # Default: true
-  flake = "github:bauer-group/IAC-NixOS";             # Quelle
+  flake = "github:bauer-group/IAC-NixOS";             # Quelle, #<template> wird angehaengt
   schedule = "03:00";                                  # Taeglich um 03:00
   allowReboot = true;                                  # Auto-Reboot erlaubt
   rebootWindowStart = "03:00";                         # Fruehester Reboot
@@ -77,7 +77,7 @@ bauergroup.params.autoUpdate.enable = false;
 ```bash
 # Das passiert automatisch — kein manueller Eingriff noetig:
 # 1. systemd Timer triggert um 03:00
-# 2. nixos-rebuild switch --flake github:bauer-group/IAC-NixOS --impure
+# 2. nixos-rebuild switch --flake github:bauer-group/IAC-NixOS#<template> --impure
 # 3. /etc/nixos/params.nix wird gelesen (maschinenspezifische Werte)
 # 4. System wird neu gebaut und aktiviert
 # 5. Reboot nur wenn Kernel/systemd sich geaendert haben
@@ -103,7 +103,7 @@ systemctl list-timers | grep nixos-upgrade
 sudo systemctl start nixos-upgrade.service
 
 # Oder manuell mit vollem Output
-sudo nixos-rebuild switch --flake github:bauer-group/IAC-NixOS --impure
+sudo nixos-rebuild switch --flake github:bauer-group/IAC-NixOS#<template> --impure
 ```
 
 ## Nix Garbage Collection
@@ -272,6 +272,6 @@ Fuer dringende Aenderungen — nicht auf Timer warten:
 ssh root@MACHINE "systemctl start nixos-upgrade.service"
 
 # Oder direkt
-nixos-rebuild switch --flake github:bauer-group/IAC-NixOS \
+nixos-rebuild switch --flake github:bauer-group/IAC-NixOS#<template> \
   --target-host root@MACHINE --impure
 ```

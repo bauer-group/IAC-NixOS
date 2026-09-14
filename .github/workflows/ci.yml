@@ -30,3 +30,6 @@ jobs:
 
       - name: 🔎 statix + deadnix
         run: nix build .#checks.x86_64-linux.lint --no-link
+
+      - name: 🧪 Template evaluation
+        run: nix build .#checks.x86_64-linux.template-eval --no-link

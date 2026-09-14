@@ -110,18 +110,22 @@
         };
 
       # ── Template builder ────────────────────────────────────────────
-      mkTemplate =
-        templatePath:
+      # name = nixosConfigurations attribute = templates/<name>.nix
+      mkSystem =
+        name: extraModules:
         nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
           modules =
             baseModules
-            ++ machineModules
+            ++ extraModules
             ++ [
-              templatePath
+              ./templates/${name}.nix
               homeManagerModule
+              { bauergroup.params.autoUpdate.template = name; }
             ];
         };
+
+      mkTemplate = name: mkSystem name machineModules;
 
       # ── Formatting ──────────────────────────────────────────────────
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
@@ -142,9 +146,9 @@
       # ── NixOS Templates ──────────────────────────────────────────────
       # Deploy with: nixos-rebuild switch --flake .#<template> --impure
       nixosConfigurations = {
-        desktop-dev = mkTemplate ./templates/desktop-dev.nix;
-        desktop-kiosk = mkTemplate ./templates/desktop-kiosk.nix;
-        server = mkTemplate ./templates/server.nix;
+        desktop-dev = mkTemplate "desktop-dev";
+        desktop-kiosk = mkTemplate "desktop-kiosk";
+        server = mkTemplate "server";
       };
 
       # ── Overlays ────────────────────────────────────────────────────
@@ -169,6 +173,17 @@
               deadnix . --exclude params.example.nix
               touch $out
             '';
+
+        # Evaluates the server template with fixed params instead of /etc/nixos
+        template-eval =
+          let
+            inherit (mkSystem "server" [ ./tests/eval-params.nix ]) config;
+            upgradeFlags = toString config.system.autoUpgrade.flags;
+          in
+          assert nixpkgs.lib.assertMsg
+            (nixpkgs.lib.hasInfix "--flake github:bauer-group/IAC-NixOS#server" upgradeFlags)
+            "auto-update must target #server, got: ${upgradeFlags}";
+          pkgs.runCommand "template-eval" { } "touch $out";
       };
 
       # ── Dev Shell ───────────────────────────────────────────────────

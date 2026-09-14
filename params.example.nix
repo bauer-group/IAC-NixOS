@@ -70,7 +70,7 @@
     # ══════════════════════════════════════════════════════════════════
     autoUpdate = {
       enable = true; # Pull latest config + packages daily
-      # flake = "github:bauer-group/IAC-NixOS";         # Source repo
+      # flake = "github:bauer-group/IAC-NixOS";         # Source repo (#<template> is appended)
       # schedule = "03:00";                              # When to check
       # allowReboot = true;                              # Reboot if kernel changed
       # rebootWindowStart = "03:00";                     # Earliest reboot time

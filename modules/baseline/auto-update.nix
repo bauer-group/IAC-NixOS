@@ -11,12 +11,16 @@
 }:
 let
   cfg = config.bauergroup.params.autoUpdate;
+
+  # nixos-rebuild falls back to the hostname when the URI has no #attribute,
+  # but configurations are named after templates (server, desktop-dev, ...)
+  flakeRef = if lib.hasInfix "#" cfg.flake then cfg.flake else "${cfg.flake}#${cfg.template}";
 in
 {
   config = lib.mkIf cfg.enable {
     system.autoUpgrade = {
       enable = true;
-      flake = cfg.flake;
+      flake = flakeRef;
       dates = cfg.schedule;
       allowReboot = cfg.allowReboot;
       rebootWindow = {

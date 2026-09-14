@@ -279,7 +279,13 @@
       flake = lib.mkOption {
         type = lib.types.str;
         default = "github:bauer-group/IAC-NixOS";
-        description = "Flake URI to pull updates from.";
+        description = "Flake URI to pull updates from. Without #attribute, the template name is appended.";
+      };
+
+      template = lib.mkOption {
+        type = lib.types.str;
+        internal = true;
+        description = "nixosConfigurations attribute of this machine's template. Set by flake.nix.";
       };
 
       schedule = lib.mkOption {
