@@ -4,6 +4,12 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [3.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v3.0.1...v3.1.0) (2026-09-14)
+
+### 🚀 Features
+
+* **monitoring:** disabled Grafana phone-home ([024b83f](https://github.com/bauer-group/IAC-NixOS/commit/024b83f8338078807ca26baac6f261084a9097f8))
+
 ## [3.0.1](https://github.com/bauer-group/IAC-NixOS/compare/v3.0.0...v3.0.1) (2026-09-14)
 
 ### 🐛 Bug Fixes
