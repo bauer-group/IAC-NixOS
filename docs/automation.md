@@ -68,7 +68,7 @@ bauergroup.params.autoUpdate.enable = false;
 
 ### Was wird aktualisiert?
 
-1. **NixOS Pakete** — Sicherheitsupdates, Bugfixes aus dem nixos-25.11 Channel
+1. **NixOS Pakete** — Sicherheitsupdates, Bugfixes aus dem nixos-26.05 Channel
 2. **Repo-Aenderungen** — Neue Module, geaenderte Templates, Konfigurationsaenderungen
 3. **Flake Inputs** — Wenn jemand `nix flake update` committet (nixpkgs, home-manager, etc.)
 
@@ -241,9 +241,9 @@ GitHub Actions → 🔄 Flake Update → Run workflow
 
 | Input | Channel | Was aendert sich |
 | --- | --- | --- |
-| nixpkgs | nixos-25.11 | Sicherheitspatches, Bugfixes, Paketversionen |
+| nixpkgs | nixos-26.05 | Sicherheitspatches, Bugfixes, Paketversionen |
 | nixpkgs-unstable | nixos-unstable | Bleeding-edge Pakete (nur via pkgs.unstable.*) |
-| home-manager | release-25.11 | User-Config Module |
+| home-manager | release-26.05 | User-Config Module |
 | agenix | latest | Secrets Management |
 | disko | latest | Disk Partitioning |
 | colmena | latest | Fleet Deployment |

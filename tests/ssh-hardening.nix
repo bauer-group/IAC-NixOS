@@ -7,7 +7,7 @@
   pkgs,
   ...
 }:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "ssh-hardening";
 
   nodes.server =

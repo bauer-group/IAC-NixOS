@@ -9,13 +9,18 @@
   programs.git = {
     enable = true;
     lfs.enable = true;
-    delta.enable = true; # Better diff viewer
-    extraConfig = {
+    settings = {
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
       core.autocrlf = "input";
     };
+  };
+
+  # Better diff viewer
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
   };
 
   # ── Shell (Zsh) ─────────────────────────────────────────────────
@@ -44,7 +49,7 @@
       nrb = "nixos-rebuild build --flake .";
       nfu = "nix flake update";
     };
-    initExtra = ''
+    initContent = ''
       # Quick CAN-Bus aliases
       alias candump0='candump vcan0'
       alias cansend0='cansend vcan0'
@@ -80,5 +85,5 @@
   };
 
   # ── Home State Version ──────────────────────────────────────────
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 }

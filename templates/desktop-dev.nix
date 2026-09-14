@@ -67,7 +67,7 @@ in
     packages = with pkgs; [
       noto-fonts
       noto-fonts-cjk-sans
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       fira-code
       fira-code-symbols
       jetbrains-mono
@@ -111,7 +111,7 @@ in
       python3Packages.pip
       python3Packages.virtualenv
       nodejs_22
-      nodePackages.pnpm
+      pnpm
       go
       dotnet-sdk_8
 
@@ -168,5 +168,5 @@ in
   services.blueman.enable = lib.mkDefault true;
 
   # ── State Version ──────────────────────────────────────────────────
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

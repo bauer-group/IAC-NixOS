@@ -3,7 +3,7 @@
 ## Voraussetzungen
 
 - Ein x86_64-Rechner (physisch oder VM)
-- NixOS 25.11 Installations-ISO ([Download](https://nixos.org/download))
+- NixOS 26.05 Installations-ISO ([Download](https://nixos.org/download))
 - USB-Stick (mind. 4 GB) oder VM-Setup
 - Internetzugang auf der Zielmaschine
 

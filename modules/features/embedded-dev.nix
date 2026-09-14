@@ -56,7 +56,7 @@ in
       {
         name = "canbus-full-support";
         patch = null;
-        extraStructuredConfig = with lib.kernel; {
+        structuredExtraConfig = with lib.kernel; {
           # Core CAN
           CAN = yes;
           CAN_RAW = yes;

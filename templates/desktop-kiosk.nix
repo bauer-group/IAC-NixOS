@@ -112,6 +112,7 @@ in
   systemd.services.kiosk-backend = lib.mkIf (kiosk.composeFile != null) {
     description = "Kiosk backend services (Docker Compose)";
     wantedBy = [ "multi-user.target" ];
+    wants = [ "network-online.target" ];
     after = [
       "docker.service"
       "network-online.target"
@@ -149,12 +150,10 @@ in
 
   # ── Power management ──────────────────────────────────────────────
   # Prevent screen from sleeping
-  services.logind = {
-    lidSwitch = "ignore";
-    extraConfig = ''
-      HandlePowerKey=ignore
-      IdleAction=ignore
-    '';
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandlePowerKey = "ignore";
+    IdleAction = "ignore";
   };
 
   # ── Security ───────────────────────────────────────────────────────
@@ -170,5 +169,5 @@ in
   };
 
   # ── State Version ──────────────────────────────────────────────────
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

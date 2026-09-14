@@ -7,7 +7,7 @@
   pkgs,
   ...
 }:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "docker-service";
 
   nodes.server =

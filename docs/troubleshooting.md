@@ -190,6 +190,9 @@ sudo iptables -L INPUT -n | grep 9100
 # Service prüfen
 systemctl status grafana
 
+# Startet nicht? Secret Key vorhanden? (grafanaSecretKeyFile, siehe docs/secrets.md)
+journalctl -u grafana -n 50 | grep -iE "credential|secret"
+
 # Default-Port: 3100
 curl http://localhost:3100/api/health
 ```

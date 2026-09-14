@@ -39,12 +39,14 @@ in
   # ── DNS ─────────────────────────────────────────────────────────────
   services.resolved = {
     enable = lib.mkDefault true;
-    fallbackDns = [
-      "1.1.1.1"
-      "8.8.8.8"
-      "2606:4700:4700::1111"
-    ];
-    dnsovertls = "opportunistic";
+    settings.Resolve = {
+      FallbackDNS = [
+        "1.1.1.1"
+        "8.8.8.8"
+        "2606:4700:4700::1111"
+      ];
+      DNSOverTLS = "opportunistic";
+    };
   };
 
   # ── Kernel network parameters ──────────────────────────────────────

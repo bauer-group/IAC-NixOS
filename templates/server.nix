@@ -83,6 +83,7 @@ in
     lib.nameValuePair "compose-${name}" {
       description = "Docker Compose: ${name}";
       wantedBy = [ "multi-user.target" ];
+      wants = [ "network-online.target" ];
       after = [
         "docker.service"
         "network-online.target"
@@ -121,5 +122,5 @@ in
   };
 
   # ── State Version ──────────────────────────────────────────────────
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

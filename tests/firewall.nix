@@ -7,7 +7,7 @@
   pkgs,
   ...
 }:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "firewall";
 
   nodes.server =

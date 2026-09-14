@@ -19,19 +19,16 @@ in
   home.homeDirectory = "/home/${userParams.name}";
 
   # ── Git identity (from params) ────────────────────────────────────
-  programs.git = {
-    userName = lib.mkIf (userParams.fullName != "") userParams.fullName;
-    userEmail = lib.mkIf (userParams.email != "") userParams.email;
+  programs.git.settings.user = {
+    name = lib.mkIf (userParams.fullName != "") userParams.fullName;
+    email = lib.mkIf (userParams.email != "") userParams.email;
   };
 
   # ── SSH ────────────────────────────────────────────────────────────
   programs.ssh = {
     enable = true;
-    matchBlocks = {
-      "*" = {
-        identityFile = "~/.ssh/id_ed25519";
-      };
-    };
+    enableDefaultConfig = false;
+    settings."*".IdentityFile = "~/.ssh/id_ed25519";
   };
 
   # ── Neovim ─────────────────────────────────────────────────────────
@@ -40,6 +37,8 @@ in
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
+    # Load generated Lua via the wrapper so a user-managed init.lua survives
+    sideloadInitLua = true;
   };
 
   # ── Kitty Terminal (only useful on desktop templates) ──────────────

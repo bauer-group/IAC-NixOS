@@ -3,14 +3,14 @@
 
   inputs = {
     # Stable channel for production
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     # Unstable channel for latest kernel & bleeding-edge packages
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Home Manager for user-level config
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -129,7 +129,7 @@
       pre-commit-check = git-hooks-nix.lib.${system}.run {
         src = self;
         hooks = {
-          nixfmt-rfc-style.enable = true;
+          nixfmt.enable = true;
           statix.enable = true;
           deadnix.enable = true;
           check-merge-conflicts.enable = true;

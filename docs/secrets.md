@@ -88,6 +88,33 @@ Die Secrets werden zur Laufzeit unter `/run/agenix/<name>` verfügbar. Referenzi
 }
 ```
 
+### Grafana Secret Key (Monitoring-Server)
+
+Der volle Monitoring-Stack (`bauergroup.services.monitoring.enable = true`) braucht seit NixOS 26.05 einen eigenen Grafana Secret Key, sonst schlägt die Evaluation fehl. Das Baseline-Modul erwartet nur einen Dateipfad auf der Zielmaschine — woher die Datei kommt, entscheidet das Deployment:
+
+```nix
+# /etc/nixos/params.nix auf dem Monitoring-Server
+{ ... }: {
+  bauergroup.services.monitoring = {
+    enable = true;
+    grafanaSecretKeyFile = "/run/agenix/grafana-secret-key";
+  };
+
+  # Variante A: agenix Secret aus dem Repo
+  #   openssl rand -hex 32 | agenix -e secrets/grafana-secret-key.age
+  age.secrets.grafana-secret-key.file = /pfad/zum/repo/secrets/grafana-secret-key.age;
+
+  # Variante B: Datei beim Deployment ablegen (dann ohne age.secrets)
+  #   sudo install -m 0400 /dev/null /var/lib/grafana-secret-key
+  #   openssl rand -hex 32 | sudo tee /var/lib/grafana-secret-key >/dev/null
+  #   grafanaSecretKeyFile = "/var/lib/grafana-secret-key";
+}
+```
+
+Die Datei darf root-only bleiben: systemd reicht sie per `LoadCredential` an Grafana weiter. Pfade als String angeben — ein unquotierter Pfad würde bei String-Interpolation in den world-readable Nix Store kopiert.
+
+Ein neuer Key macht Werte unlesbar, die Grafana bereits mit dem alten Key verschlüsselt hat (z.B. in der UI eingetragene Contact-Point-Credentials). Die per Nix provisionierte Prometheus-Datasource ist nicht betroffen.
+
 ## Secret-Rotation
 
 ```bash
@@ -122,13 +149,14 @@ nixos-rebuild switch --flake .#server --impure
 
 ## Häufige Secrets
 
-| Secret        | Datei                   | Wer braucht es                    |
-| ------------- | ----------------------- | --------------------------------- |
-| User-Passwort | `user-password.age`     | Alle Maschinen                    |
-| Restic Backup | `restic-password.age`   | Server mit Backup                 |
-| Docker .env   | `webapp-env.age`        | Server mit diesem Compose-Projekt |
-| Grafana Admin | `grafana-password.age`  | Monitoring-Server                 |
-| Wireguard Key | `wireguard-private.age` | VPN-Teilnehmer                    |
+| Secret        | Datei                    | Wer braucht es                    |
+| ------------- | ------------------------ | --------------------------------- |
+| User-Passwort | `user-password.age`      | Alle Maschinen                    |
+| Restic Backup | `restic-password.age`    | Server mit Backup                 |
+| Docker .env   | `webapp-env.age`         | Server mit diesem Compose-Projekt |
+| Grafana Admin | `grafana-password.age`   | Monitoring-Server                 |
+| Grafana Key   | `grafana-secret-key.age` | Monitoring-Server (Pflicht)       |
+| Wireguard Key | `wireguard-private.age`  | VPN-Teilnehmer                    |
 
 ## Troubleshooting
 

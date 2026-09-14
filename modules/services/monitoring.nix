@@ -5,6 +5,7 @@
 #
 # Deploy on ONE server (typically prod-server-01) to scrape all hosts.
 # Enable node exporter on ALL servers via bauergroup.services.monitoring.exporterOnly.
+# The full stack requires grafanaSecretKeyFile (see docs/secrets.md).
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -24,6 +25,18 @@ in
       type = lib.types.port;
       default = 3100;
       description = "Port for Grafana web UI.";
+    };
+
+    grafanaSecretKeyFile = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        Path on the target machine to the file holding Grafana's secret key
+        (e.g. an agenix secret or a file placed during deployment). Grafana
+        encrypts data source and alerting credentials with it. The file may stay
+        root-only; it is passed to Grafana as a systemd credential.
+        Generate with: openssl rand -hex 32
+      '';
+      example = "/run/agenix/grafana-secret-key";
     };
 
     prometheusPort = lib.mkOption {
@@ -150,6 +163,8 @@ in
           security = {
             admin_user = "admin";
             admin_password = "admin";
+            # Expanded by Grafana at startup from the credential loaded below
+            secret_key = "$__file{/run/credentials/grafana.service/secret_key}";
           };
         };
 
@@ -164,6 +179,12 @@ in
           ];
         };
       };
+
+      # systemd reads the key as root, so the source file can stay root-only.
+      # toString keeps a path literal from being copied into the Nix store.
+      systemd.services.grafana.serviceConfig.LoadCredential = [
+        "secret_key:${toString cfg.grafanaSecretKeyFile}"
+      ];
 
       networking.firewall.allowedTCPPorts = [
         cfg.grafanaPort
