@@ -21,4 +21,9 @@ _: {
       };
     };
   };
+
+  bauergroup.services.monitoring = {
+    enable = true;
+    grafanaSecretKeyFile = /run/agenix/grafana-secret-key;
+  };
 }

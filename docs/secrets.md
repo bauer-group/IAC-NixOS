@@ -101,17 +101,16 @@ Der volle Monitoring-Stack (`bauergroup.services.monitoring.enable = true`) brau
   };
 
   # Variante A: agenix Secret aus dem Repo
-  #   openssl rand -hex 32 | agenix -e secrets/grafana-secret-key.age
+  #   head -c 32 /dev/urandom | base64 | agenix -e secrets/grafana-secret-key.age
   age.secrets.grafana-secret-key.file = /pfad/zum/repo/secrets/grafana-secret-key.age;
 
   # Variante B: Datei beim Deployment ablegen (dann ohne age.secrets)
-  #   sudo install -m 0400 /dev/null /var/lib/grafana-secret-key
-  #   openssl rand -hex 32 | sudo tee /var/lib/grafana-secret-key >/dev/null
+  #   head -c 32 /dev/urandom | base64 | sudo install -m 0400 /dev/stdin /var/lib/grafana-secret-key
   #   grafanaSecretKeyFile = "/var/lib/grafana-secret-key";
 }
 ```
 
-Die Datei darf root-only bleiben: systemd reicht sie per `LoadCredential` an Grafana weiter. Pfade als String angeben — ein unquotierter Pfad würde bei String-Interpolation in den world-readable Nix Store kopiert.
+Die Datei darf root-only bleiben: systemd reicht sie per `LoadCredential` an Grafana weiter. Ist sie leer, startet Grafana nicht. Pfade am besten als String angeben — die Baseline-Module lesen sie per `toString` zur Laufzeit, andere Module würden einen unquotierten Pfad aber in den world-readable Nix Store kopieren.
 
 Ein neuer Key macht Werte unlesbar, die Grafana bereits mit dem alten Key verschlüsselt hat (z.B. in der UI eingetragene Contact-Point-Credentials). Die per Nix provisionierte Prometheus-Datasource ist nicht betroffen.
 

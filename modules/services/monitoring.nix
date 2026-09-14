@@ -34,7 +34,7 @@ in
         (e.g. an agenix secret or a file placed during deployment). Grafana
         encrypts data source and alerting credentials with it. The file may stay
         root-only; it is passed to Grafana as a systemd credential.
-        Generate with: openssl rand -hex 32
+        Generate with: head -c 32 /dev/urandom | base64
       '';
       example = "/run/agenix/grafana-secret-key";
     };
@@ -180,11 +180,21 @@ in
         };
       };
 
-      # systemd reads the key as root, so the source file can stay root-only.
-      # toString keeps a path literal from being copied into the Nix store.
-      systemd.services.grafana.serviceConfig.LoadCredential = [
-        "secret_key:${toString cfg.grafanaSecretKeyFile}"
-      ];
+      systemd.services.grafana = {
+        # systemd reads the key as root, so the source file can stay root-only.
+        # toString keeps a path literal from being copied into the Nix store.
+        serviceConfig.LoadCredential = [
+          "secret_key:${toString cfg.grafanaSecretKeyFile}"
+        ];
+
+        # Grafana starts silently with an empty key, so refuse that here
+        preStart = lib.mkBefore ''
+          if ! grep -q '[^[:space:]]' "$CREDENTIALS_DIRECTORY/secret_key"; then
+            echo "Grafana secret key ${toString cfg.grafanaSecretKeyFile} is empty" >&2
+            exit 1
+          fi
+        '';
+      };
 
       networking.firewall.allowedTCPPorts = [
         cfg.grafanaPort

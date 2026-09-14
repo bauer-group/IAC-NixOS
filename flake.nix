@@ -181,6 +181,7 @@
             upgradeFlags = toString config.system.autoUpgrade.flags;
             composePreStart = config.systemd.services.compose-app.preStart;
             resticPasswordFile = config.services.restic.backups.system.passwordFile;
+            grafana = config.systemd.services.grafana;
           in
           assert nixpkgs.lib.assertMsg
             (nixpkgs.lib.hasInfix "--flake github:bauer-group/IAC-NixOS#server" upgradeFlags)
@@ -190,6 +191,12 @@
           assert nixpkgs.lib.assertMsg (
             resticPasswordFile == "/run/agenix/restic-password"
           ) "backup passwordFile must stay a runtime path, got: ${resticPasswordFile}";
+          assert nixpkgs.lib.assertMsg (
+            grafana.serviceConfig.LoadCredential == [ "secret_key:/run/agenix/grafana-secret-key" ]
+          ) "grafana secret key must be passed as a systemd credential";
+          assert nixpkgs.lib.assertMsg
+            (nixpkgs.lib.hasInfix "$CREDENTIALS_DIRECTORY/secret_key" grafana.preStart)
+            "grafana must refuse to start with an empty secret key";
           pkgs.runCommand "template-eval" { } "touch $out";
       };
 
