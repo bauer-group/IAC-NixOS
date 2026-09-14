@@ -179,10 +179,17 @@
           let
             inherit (mkSystem "server" [ ./tests/eval-params.nix ]) config;
             upgradeFlags = toString config.system.autoUpgrade.flags;
+            composePreStart = config.systemd.services.compose-app.preStart;
+            resticPasswordFile = config.services.restic.backups.system.passwordFile;
           in
           assert nixpkgs.lib.assertMsg
             (nixpkgs.lib.hasInfix "--flake github:bauer-group/IAC-NixOS#server" upgradeFlags)
             "auto-update must target #server, got: ${upgradeFlags}";
+          assert nixpkgs.lib.assertMsg (nixpkgs.lib.hasInfix "cp -f /run/agenix/app-env " composePreStart)
+            "envFile must be read at runtime, not copied into the Nix store";
+          assert nixpkgs.lib.assertMsg (
+            resticPasswordFile == "/run/agenix/restic-password"
+          ) "backup passwordFile must stay a runtime path, got: ${resticPasswordFile}";
           pkgs.runCommand "template-eval" { } "touch $out";
       };
 

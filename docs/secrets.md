@@ -70,14 +70,14 @@ Die Secrets werden zur Laufzeit unter `/run/agenix/<name>` verfügbar. Referenzi
       composeProjects = {
         webapp = {
           directory = "/opt/webapp";
-          envFile = /run/agenix/webapp-env;  # ← agenix Secret
+          envFile = "/run/agenix/webapp-env";  # ← agenix Secret
         };
       };
 
       backup = {
         enable = true;
         repository = "sftp:backup@storage:/backups/srv-prod-01";
-        passwordFile = /run/agenix/restic-password;  # ← agenix Secret
+        passwordFile = "/run/agenix/restic-password";  # ← agenix Secret
       };
     };
   };

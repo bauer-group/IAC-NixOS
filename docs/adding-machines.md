@@ -116,7 +116,7 @@ bauergroup.params = {
     composeProjects = {
       webapp = {
         directory = "/opt/webapp";
-        envFile = /run/agenix/webapp-env;  # Optional: Secrets
+        envFile = "/run/agenix/webapp-env";  # Optional: Secrets
       };
       traefik = {
         directory = "/opt/traefik";
@@ -126,7 +126,7 @@ bauergroup.params = {
     backup = {
       enable = true;
       repository = "sftp:backup@storage:/backups/srv-prod-01";
-      passwordFile = /run/agenix/restic-password;
+      passwordFile = "/run/agenix/restic-password";
     };
   };
 };

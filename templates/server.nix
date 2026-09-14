@@ -107,7 +107,7 @@ in
       };
 
       preStart = lib.optionalString (project.envFile != null) ''
-        cp -f ${project.envFile} ${project.directory}/.env
+        cp -f ${toString project.envFile} ${project.directory}/.env
         chmod 600 ${project.directory}/.env
       '';
     }

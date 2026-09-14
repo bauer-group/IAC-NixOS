@@ -93,7 +93,7 @@ in
   config = lib.mkIf cfg.enable {
     services.restic.backups.system = {
       repository = cfg.repository;
-      passwordFile = cfg.passwordFile;
+      passwordFile = toString cfg.passwordFile;
       paths = cfg.paths;
       exclude = cfg.excludePaths;
 

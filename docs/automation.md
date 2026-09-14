@@ -148,7 +148,7 @@ Nur aktiv wenn in `params.nix` konfiguriert:
 bauergroup.params.server.backup = {
   enable = true;
   repository = "sftp:backup@storage:/backups/hostname";
-  passwordFile = /run/agenix/restic-password;
+  passwordFile = "/run/agenix/restic-password";
 };
 ```
 

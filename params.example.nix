@@ -107,7 +107,7 @@
       composeProjects = {
         # outline = {
         #   directory = "/opt/outline";
-        #   envFile = null;  # or /run/agenix/outline-env
+        #   envFile = null;  # or "/run/agenix/outline-env"
         # };
         # traefik = {
         #   directory = "/opt/traefik";
