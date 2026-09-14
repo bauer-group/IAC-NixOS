@@ -1,3 +1,43 @@
+# Changelog
+
+All notable changes to this project are documented here. This file is maintained
+automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
+on every release to `main`.
+
+## [3.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v2.0.0...v3.0.0) (2026-09-14)
+
+### ⚠ BREAKING CHANGES
+
+* **nixos:** machines upgrade to NixOS 26.05 with kernel 6.18,
+  systemd-based initrd and dbus-broker. LUKS roots must reference
+  /dev/mapper/<name>. Machines with allowReboot = false need a manual
+  nixos-rebuild boot plus reboot, since the dbus change inhibits switch.
+  Monitoring servers must set
+  bauergroup.services.monitoring.grafanaSecretKeyFile.
+
+### 🚀 Features
+
+* **nixos:** upgraded to NixOS 26.05 ([4d0f319](https://github.com/bauer-group/IAC-NixOS/commit/4d0f319762811c90324810eab104493dc8995a18))
+
+### 🐛 Bug Fixes
+
+* **auto-update:** appended template to flake URI ([e0b9819](https://github.com/bauer-group/IAC-NixOS/commit/e0b9819e2db5194fa3c6db4b8a991748897df5cc)), references [#attribute](https://github.com/bauer-group/IAC-NixOS/issues/attribute) [#template](https://github.com/bauer-group/IAC-NixOS/issues/template) [#attribute](https://github.com/bauer-group/IAC-NixOS/issues/attribute)
+* **ci:** added the missing permissions block ([bbc70f2](https://github.com/bauer-group/IAC-NixOS/commit/bbc70f2dcf32e733f025fb38f2321eda3d25c577))
+* **ci:** used org PAT for flake update PRs ([f08db7e](https://github.com/bauer-group/IAC-NixOS/commit/f08db7e11a8e852f65c5712a03f3f6e1109f1c99))
+* **secrets:** kept secret paths out of Nix store ([923cb9d](https://github.com/bauer-group/IAC-NixOS/commit/923cb9dab6080862b16d15b4060386852e471cbb))
+
+### 💄 UI/UX Improvements
+
+* reformatted with nixfmt from NixOS 26.05 ([6e86df3](https://github.com/bauer-group/IAC-NixOS/commit/6e86df3805e14300fdf6ec543c200abae17e4cb0))
+
+### 🔧 Maintenance
+
+* **ci:** bump actions/checkout from 4 to 7 ([#5](https://github.com/bauer-group/IAC-NixOS/issues/5)) ([bcfde85](https://github.com/bauer-group/IAC-NixOS/commit/bcfde855a2e1c0b12760e87b58e5d6740ff7321f))
+* **ci:** bump cachix/install-nix-action from 30 to 31 ([#2](https://github.com/bauer-group/IAC-NixOS/issues/2)) ([17ebffd](https://github.com/bauer-group/IAC-NixOS/commit/17ebffd2dfd6a3ae1d8879ef10c9958d88977473))
+* **ci:** bump peter-evans/create-pull-request from 7 to 8 ([#3](https://github.com/bauer-group/IAC-NixOS/issues/3)) ([b60b752](https://github.com/bauer-group/IAC-NixOS/commit/b60b7529639836f082eee11b02f2df5f773a4339))
+* **ci:** removed redundant teams notification ([8419462](https://github.com/bauer-group/IAC-NixOS/commit/84194625fef6b9d6459f0ad97bf59c80f842dce2))
+* **codeowners:** reassigned ownership to core team [skip ci] ([2226208](https://github.com/bauer-group/IAC-NixOS/commit/22262086d9363222814657dc50ad52cf0d4b58b1))
+
 ## [2.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.2.0...v2.0.0) (2026-03-23)
 
 ### ⚠ BREAKING CHANGES
