@@ -15,5 +15,6 @@ _: {
 
   settings.global.excludes = [
     ".github/**"
+    "CHANGELOG.md" # written by semantic-release
   ];
 }
