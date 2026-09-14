@@ -21,7 +21,7 @@ on every release to `main`.
 
 ### 🐛 Bug Fixes
 
-* **auto-update:** appended template to flake URI ([e0b9819](https://github.com/bauer-group/IAC-NixOS/commit/e0b9819e2db5194fa3c6db4b8a991748897df5cc)), references [#attribute](https://github.com/bauer-group/IAC-NixOS/issues/attribute) [#template](https://github.com/bauer-group/IAC-NixOS/issues/template) [#attribute](https://github.com/bauer-group/IAC-NixOS/issues/attribute)
+* **auto-update:** appended template to flake URI ([e0b9819](https://github.com/bauer-group/IAC-NixOS/commit/e0b9819e2db5194fa3c6db4b8a991748897df5cc))
 * **ci:** added the missing permissions block ([bbc70f2](https://github.com/bauer-group/IAC-NixOS/commit/bbc70f2dcf32e733f025fb38f2321eda3d25c577))
 * **ci:** used org PAT for flake update PRs ([f08db7e](https://github.com/bauer-group/IAC-NixOS/commit/f08db7e11a8e852f65c5712a03f3f6e1109f1c99))
 * **secrets:** kept secret paths out of Nix store ([923cb9d](https://github.com/bauer-group/IAC-NixOS/commit/923cb9dab6080862b16d15b4060386852e471cbb))
@@ -42,79 +42,79 @@ on every release to `main`.
 
 ### ⚠ BREAKING CHANGES
 
-- **namespace:** Existing nixos configurations using `bauer.params` must be
-  updated to use `bauergroup.params` and all references updated accordingly.
+* **namespace:** Existing nixos configurations using `bauer.params` must be
+updated to use `bauergroup.params` and all references updated accordingly.
 
 ### ♻️ Refactoring
 
-- **namespace:** renamed module namespace from bauer to bauergroup ([954c5b0](https://github.com/bauer-group/IAC-NixOS/commit/954c5b0b87303840d71770d259884b97931471b4))
+* **namespace:** renamed module namespace from bauer to bauergroup ([954c5b0](https://github.com/bauer-group/IAC-NixOS/commit/954c5b0b87303840d71770d259884b97931471b4))
 
 ## [1.2.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.6...v1.2.0) (2026-03-23)
 
 ### 🚀 Features
 
-- **auto-update:** added configurable auto-update system ([c8e4be6](https://github.com/bauer-group/IAC-NixOS/commit/c8e4be695e437bc4efe8ab7e9a7355875623dc53))
+* **auto-update:** added configurable auto-update system ([c8e4be6](https://github.com/bauer-group/IAC-NixOS/commit/c8e4be695e437bc4efe8ab7e9a7355875623dc53))
 
 ## [1.1.6](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.5...v1.1.6) (2026-03-23)
 
 ### ♻️ Refactoring
 
-- remove unused code and parameters ([ce0d96b](https://github.com/bauer-group/IAC-NixOS/commit/ce0d96bee6c2bbc272315af0771327b22cafa6e7))
+* remove unused code and parameters ([ce0d96b](https://github.com/bauer-group/IAC-NixOS/commit/ce0d96bee6c2bbc272315af0771327b22cafa6e7))
 
 ## [1.1.5](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.4...v1.1.5) (2026-03-23)
 
 ### ♻️ Refactoring
 
-- restructured Nix configs and linting ([e3d68ed](https://github.com/bauer-group/IAC-NixOS/commit/e3d68ed1df36408a38797e1a87a0f77dc9628cc6))
+* restructured Nix configs and linting ([e3d68ed](https://github.com/bauer-group/IAC-NixOS/commit/e3d68ed1df36408a38797e1a87a0f77dc9628cc6))
 
 ## [1.1.4](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.3...v1.1.4) (2026-03-23)
 
 ### ♻️ Refactoring
 
-- **ci:** simplified CI and removed configuration fallbacks ([44d14aa](https://github.com/bauer-group/IAC-NixOS/commit/44d14aadb391ef2a6e51c7ab6d2cebd67c1f6746))
+* **ci:** simplified CI and removed configuration fallbacks ([44d14aa](https://github.com/bauer-group/IAC-NixOS/commit/44d14aadb391ef2a6e51c7ab6d2cebd67c1f6746))
 
 ## [1.1.3](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.2...v1.1.3) (2026-03-23)
 
 ### 🐛 Bug Fixes
 
-- **networking:** fixed DHCP configuration module precedence ([8aacd64](https://github.com/bauer-group/IAC-NixOS/commit/8aacd64d6027ccd9a1efcc0993efaa6bd88274fe))
+* **networking:** fixed DHCP configuration module precedence ([8aacd64](https://github.com/bauer-group/IAC-NixOS/commit/8aacd64d6027ccd9a1efcc0993efaa6bd88274fe))
 
 ## [1.1.2](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.1...v1.1.2) (2026-03-23)
 
 ### ♻️ Refactoring
 
-- **embedded-dev:** made feature conditional ([6b7c90f](https://github.com/bauer-group/IAC-NixOS/commit/6b7c90fb94849b8d094961a78c951afabb16fe42))
+* **embedded-dev:** made feature conditional ([6b7c90f](https://github.com/bauer-group/IAC-NixOS/commit/6b7c90fb94849b8d094961a78c951afabb16fe42))
 
 ## [1.1.1](https://github.com/bauer-group/IAC-NixOS/compare/v1.1.0...v1.1.1) (2026-03-23)
 
 ### 🐛 Bug Fixes
 
-- **ci:** changed nix fmt check flag to CI mode ([ac9e649](https://github.com/bauer-group/IAC-NixOS/commit/ac9e649e9ad7c27f996d291c0ead9fbc05f9711e))
-- **ci:** exclude workflow files from formatting ([aa726e9](https://github.com/bauer-group/IAC-NixOS/commit/aa726e9b25c6a5814619b599bc427aa02ebcf112))
+* **ci:** changed nix fmt check flag to CI mode ([ac9e649](https://github.com/bauer-group/IAC-NixOS/commit/ac9e649e9ad7c27f996d291c0ead9fbc05f9711e))
+* **ci:** exclude workflow files from formatting ([aa726e9](https://github.com/bauer-group/IAC-NixOS/commit/aa726e9b25c6a5814619b599bc427aa02ebcf112))
 
 ## [1.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v1.0.0...v1.1.0) (2026-03-22)
 
 ### 🚀 Features
 
-- **ci:** add template builds with CI fallback support ([d4326ee](https://github.com/bauer-group/IAC-NixOS/commit/d4326ee22eff17048decd58fe9f16cbee6d04a81))
+* **ci:** add template builds with CI fallback support ([d4326ee](https://github.com/bauer-group/IAC-NixOS/commit/d4326ee22eff17048decd58fe9f16cbee6d04a81))
 
 ### ♻️ Refactoring
 
-- **infra:** migrated to template-based config ([d542cca](https://github.com/bauer-group/IAC-NixOS/commit/d542cca70b6ba36cc574c7c336b2692b2aed7de0))
+* **infra:** migrated to template-based config ([d542cca](https://github.com/bauer-group/IAC-NixOS/commit/d542cca70b6ba36cc574c7c336b2692b2aed7de0))
 
 ## [1.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v0.1.0...v1.0.0) (2026-03-22)
 
 ### ⚠ BREAKING CHANGES
 
-- **flake:** Existing deployments must migrate to parameter-based
+* **flake:** Existing deployments must migrate to parameter-based
   system. Per-host hardcoded configs no longer supported.
 
 ### ♻️ Refactoring
 
-- **flake:** switched to parametric template-based architecture ([018481b](https://github.com/bauer-group/IAC-NixOS/commit/018481bb7071f6a19fe948f8f670657224edab7d))
+* **flake:** switched to parametric template-based architecture ([018481b](https://github.com/bauer-group/IAC-NixOS/commit/018481bb7071f6a19fe948f8f670657224edab7d))
 
 ## [0.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v0.0.0...v0.1.0) (2026-03-21)
 
 ### 🚀 Features
 
-- Initial Commit ([1123c82](https://github.com/bauer-group/IAC-NixOS/commit/1123c8221dd8f310ae6cc408b9d4f491e909f8dd))
+* Initial Commit ([1123c82](https://github.com/bauer-group/IAC-NixOS/commit/1123c8221dd8f310ae6cc408b9d4f491e909f8dd))
