@@ -6,6 +6,8 @@
 # Deploy on ONE server (typically prod-server-01) to scrape all hosts.
 # Enable node exporter on ALL servers via bauergroup.services.monitoring.exporterOnly.
 # The full stack requires grafanaSecretKeyFile (see docs/secrets.md).
+# Grafana makes no outbound connections; add plugins via
+# services.grafana.declarativePlugins instead of downloads from grafana.com.
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -165,7 +167,23 @@ in
             admin_password = "admin";
             # Expanded by Grafana at startup from the credential loaded below
             secret_key = "$__file{/run/credentials/grafana.service/secret_key}";
+            # Browsers would otherwise load avatars (email hashes) from gravatar.com
+            disable_gravatar = true;
           };
+
+          # No outbound connections: set explicitly, independent of NixOS defaults
+          analytics = {
+            reporting_enabled = false;
+            check_for_updates = false;
+            check_for_plugin_updates = false;
+          };
+          plugins = {
+            preinstall_disabled = true;
+            # Verify plugin signatures with the key built into Grafana
+            public_key_retrieval_disabled = true;
+          };
+          news.news_feed_enabled = false;
+          snapshots.external_enabled = false;
         };
 
         provision = {

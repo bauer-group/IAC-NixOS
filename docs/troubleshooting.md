@@ -197,6 +197,20 @@ journalctl -u grafana -n 50 | grep -iE "credential|secret"
 curl http://localhost:3100/api/health
 ```
 
+### Grafana-Plugins fehlen
+
+Die Baseline unterbindet alle Verbindungen von Grafana nach außen, auch Plugin-Downloads von grafana.com. Plugins deshalb deklarativ aus nixpkgs installieren (danach sind Installationen über die UI gesperrt):
+
+```nix
+# /etc/nixos/params.nix auf dem Monitoring-Server
+{ pkgs, ... }: {
+  services.grafana.declarativePlugins = with pkgs.grafanaPlugins; [
+    grafana-metricsdrilldown-app
+    grafana-lokiexplore-app
+  ];
+}
+```
+
 ## Nix Debugging
 
 ### REPL verwenden

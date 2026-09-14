@@ -182,6 +182,7 @@
             composePreStart = config.systemd.services.compose-app.preStart;
             resticPasswordFile = config.services.restic.backups.system.passwordFile;
             grafana = config.systemd.services.grafana;
+            grafanaSettings = config.services.grafana.settings;
           in
           assert nixpkgs.lib.assertMsg
             (nixpkgs.lib.hasInfix "--flake github:bauer-group/IAC-NixOS#server" upgradeFlags)
@@ -197,6 +198,16 @@
           assert nixpkgs.lib.assertMsg
             (nixpkgs.lib.hasInfix "$CREDENTIALS_DIRECTORY/secret_key" grafana.preStart)
             "grafana must refuse to start with an empty secret key";
+          assert nixpkgs.lib.assertMsg (
+            !grafanaSettings.analytics.reporting_enabled
+            && !grafanaSettings.analytics.check_for_updates
+            && !grafanaSettings.analytics.check_for_plugin_updates
+            && grafanaSettings.plugins.preinstall_disabled
+            && grafanaSettings.plugins.public_key_retrieval_disabled
+            && !grafanaSettings.news.news_feed_enabled
+            && !grafanaSettings.snapshots.external_enabled
+            && grafanaSettings.security.disable_gravatar
+          ) "grafana must not make outbound connections";
           pkgs.runCommand "template-eval" { } "touch $out";
       };
 
