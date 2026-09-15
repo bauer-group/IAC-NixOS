@@ -24,12 +24,16 @@
       name = "admin"; # Username for the primary account
       fullName = "Max Mustermann"; # For git config
       email = "max@bauer-group.com"; # For git config
+
+      # REQUIRED: at least one SSH key or a hashedPassword.
+      # With both empty the build fails, because the account could never log in.
       sshKeys = [
         # "ssh-ed25519 AAAAC3Nza... user@machine"
       ];
 
       # Generate with: mkpasswd -m sha-512 "your-password"
-      # If null, only SSH key login works (no console login)
+      # If null, only SSH key login works (no console login).
+      # desktop-kiosk: needed for sudo, which requires a password there.
       hashedPassword = null;
 
       # Extra groups beyond the defaults (wheel, docker, etc.)

@@ -11,8 +11,30 @@
 }:
 let
   userParams = config.bauergroup.params.user;
+  account = config.users.users.${userParams.name};
 in
 {
+  # NixOS only checks that root or some wheel user can log in, and its message
+  # does not name the params to set. Other credential options (e.g.
+  # hashedPasswordFile from agenix) set in /etc/nixos/params.nix count too.
+  assertions = [
+    {
+      assertion =
+        config.users.mutableUsers
+        || config.users.allowNoPasswordLogin
+        || account.openssh.authorizedKeys.keys != [ ]
+        || account.openssh.authorizedKeys.keyFiles != [ ]
+        || account.hashedPassword != null
+        || account.hashedPasswordFile != null
+        || account.password != null;
+      message = ''
+        bauergroup.params.user: set user.sshKeys or user.hashedPassword in /etc/nixos/params.nix.
+        Users are managed declaratively (users.mutableUsers = false), so without either
+        the account "${userParams.name}" could never log in.
+      '';
+    }
+  ];
+
   # Don't allow imperative user management
   users.mutableUsers = lib.mkDefault false;
 

@@ -42,14 +42,14 @@
       sshKeys = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
-        description = "SSH public keys for authorized login.";
+        description = "SSH public keys for authorized login. At least one of sshKeys or hashedPassword is required.";
         example = [ "ssh-ed25519 AAAAC3Nza... user@host" ];
       };
 
       hashedPassword = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "Hashed password (mkpasswd -m sha-512). If null, only SSH login works.";
+        description = "Hashed password (mkpasswd -m sha-512). If null, only SSH key login works, so sshKeys must not be empty.";
       };
 
       extraGroups = lib.mkOption {

@@ -59,9 +59,13 @@ Die `params.nix` setzt nicht alle Pflichtfelder:
 
 ```bash
 # Pflichtfelder prüfen
-# Mindestens: hostName und user.name müssen gesetzt sein
+# Mindestens: hostName sowie user.sshKeys oder user.hashedPassword müssen gesetzt sein
 cat /etc/nixos/params.nix
 ```
+
+### "bauergroup.params.user: set user.sshKeys or user.hashedPassword"
+
+Das Admin-Konto hätte keinen Login: Benutzer werden deklarativ verwaltet, ein Passwort lässt sich nachträglich nicht setzen. In `/etc/nixos/params.nix` mindestens einen SSH-Key unter `user.sshKeys` oder einen Hash unter `user.hashedPassword` (`mkpasswd -m sha-512`) eintragen, siehe `params.example.nix`.
 
 ## Deployment-Fehler
 
