@@ -6,24 +6,29 @@ Jede Maschine fuehrt automatisch folgende Prozesse aus:
 
 ### Auf jeder Maschine
 
-| Prozess                    | Zeitpunkt                 | Was passiert                                                          |
-| -------------------------- | ------------------------- | --------------------------------------------------------------------- |
-| **Auto-Update**            | Taeglich 03:00            | Pulled neueste Config + Pakete von GitHub, rebuild, reboot bei Bedarf |
-| **Nix Garbage Collection** | Woechentlich              | Loescht unbenutzte Pakete aelter als 7 Tage                           |
-| **Docker Auto-Prune**      | Woechentlich              | Entfernt unbenutzte Docker Images aelter als 7 Tage                   |
-| **Restic Backup**          | Taeglich (wenn aktiviert) | Sichert /opt, /var/lib, /home auf Backup-Server                       |
-| **Chrony NTP**             | Permanent                 | Zeitsynchronisation mit time.bauer-group.com                          |
-| **Fail2ban**               | Permanent                 | Blockiert SSH Brute-Force (5 Versuche → 1h Ban)                       |
+| Prozess                    | Zeitpunkt      | Was passiert                                                          |
+| -------------------------- | -------------- | --------------------------------------------------------------------- |
+| **Auto-Update**            | Taeglich 03:00 | Pulled neueste Config + Pakete von GitHub, rebuild, reboot bei Bedarf |
+| **Nix Garbage Collection** | Woechentlich   | Loescht unbenutzte Pakete aelter als 7 Tage                           |
+| **Docker Auto-Prune**      | Woechentlich   | Entfernt unbenutzte Docker Images aelter als 7 Tage                   |
+| **Chrony NTP**             | Permanent      | Zeitsynchronisation mit time.bauer-group.com                          |
+
+### Je nach Template
+
+| Prozess           | desktop-dev | desktop-kiosk | server            | Was passiert                                                |
+| ----------------- | ----------- | ------------- | ----------------- | ----------------------------------------------------------- |
+| **Fail2ban**      | –           | Permanent     | Permanent         | Blockiert SSH Brute-Force (5 Versuche → 1h Ban)             |
+| **Node Exporter** | –           | Permanent     | Permanent         | Prometheus-Metriken auf Port 9100                           |
+| **Restic Backup** | –           | –             | Taeglich (opt-in) | Sichert /opt, /var/lib, /home, /etc/nixos auf Backup-Server |
 
 ### In GitHub (CI/CD)
 
-| Prozess             | Zeitpunkt            | Was passiert                                  |
-| ------------------- | -------------------- | --------------------------------------------- |
-| **🧹 CI**           | Bei Push/PR auf main | Linting (deadnix)                             |
-| **🎨 Format**       | Manuell              | Formatiert alle .nix Dateien                  |
-| **🔄 Flake Update** | Sonntag 02:00 UTC    | Erstellt PR mit aktualisierten Paketversionen |
-| **🚀 Release**      | Bei Push auf main    | Semantic Versioning + Changelog               |
-| **📢 Teams**        | Bei Events           | Benachrichtigungen an Microsoft Teams         |
+| Prozess             | Zeitpunkt            | Was passiert                                                          |
+| ------------------- | -------------------- | --------------------------------------------------------------------- |
+| **🧹 CI**           | Bei Push/PR auf main | Linting (statix, deadnix), Evaluation aller Templates, NixOS VM-Tests |
+| **🎨 Format**       | Manuell              | Formatiert alle .nix Dateien                                          |
+| **🔄 Flake Update** | Sonntag 02:00 UTC    | Erstellt PR mit aktualisierten Paketversionen                         |
+| **🚀 Release**      | Bei Push auf main    | Semantic Versioning + Changelog                                       |
 
 ## Auto-Update
 
