@@ -158,9 +158,11 @@ bauergroup.params = {
     composeFile = /opt/kiosk/docker-compose.yml;
     composeDirectory = "/opt/kiosk";
     touchscreen = true;
-    rotation = "left";     # Hochformat-Display
-    idleTimeout = 300;     # Nach 5 Min Browser resetten
+    rotation = "left";     # Hochformat: Bild gegen den Uhrzeigersinn gedreht ("right" = im Uhrzeigersinn)
+    idleTimeout = 300;     # Nach 5 Min ohne Eingabe Browser auf url zuruecksetzen
+    # user = "kiosk";      # Unprivilegierter Browser-Benutzer, muss sich von user.name unterscheiden
   };
+  # Auf Kiosks verlangt sudo ein Passwort: user.hashedPassword setzen (mkpasswd -m sha-512)
 };
 ```
 

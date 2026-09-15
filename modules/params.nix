@@ -164,6 +164,15 @@
         description = "URL to display in kiosk mode.";
       };
 
+      user = lib.mkOption {
+        type = lib.types.str;
+        default = "kiosk";
+        description = ''
+          Unprivileged account that runs the kiosk browser session. It has no password,
+          no sudo and no Docker access, and must differ from user.name.
+        '';
+      };
+
       composeFile = lib.mkOption {
         type = lib.types.nullOr lib.types.path;
         default = null;
@@ -190,13 +199,16 @@
           "inverted"
         ];
         default = "normal";
-        description = "Screen rotation for kiosk display.";
+        description = ''
+          Screen rotation for kiosk display, as in xrandr: "left" rotates the picture
+          counter-clockwise, "right" clockwise (both give portrait on a landscape panel).
+        '';
       };
 
       idleTimeout = lib.mkOption {
-        type = lib.types.nullOr lib.types.int;
+        type = lib.types.nullOr lib.types.ints.positive;
         default = null;
-        description = "Seconds of inactivity before resetting browser to home URL. Null = disabled.";
+        description = "Seconds without touch, mouse or keyboard input before the browser restarts at the home URL. Null = disabled.";
       };
     };
 

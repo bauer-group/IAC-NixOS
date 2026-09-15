@@ -198,8 +198,12 @@
             # without building anything; dropping the context avoids a build dependency
             evaluates = cfg: builtins.unsafeDiscardStringContext cfg.system.build.toplevel.drvPath != "";
 
+            inherit (nixpkgs.lib) hasInfix;
+
             dev = evalTemplate "desktop-dev";
             kiosk = evalTemplate "desktop-kiosk";
+            kioskSession = kiosk.services.cage.program.text;
+            cage = kiosk.systemd.services.cage-tty1;
             homeOf = cfg: cfg.home-manager.users.admin;
 
             config = evalTemplate "server";
@@ -214,6 +218,24 @@
             kiosk
             config
           ];
+          assert nixpkgs.lib.assertMsg (
+            kiosk.services.cage.extraArguments == [ ] && hasInfix "--transform 90" kioskSession
+          ) "kiosk rotation must use wlr-randr: cage 0.3 exits on -r";
+          assert nixpkgs.lib.assertMsg (
+            cage.serviceConfig.Restart == "always" && cage.restartIfChanged
+          ) "kiosk session must restart after a crash and on config changes";
+          assert nixpkgs.lib.assertMsg (
+            !kiosk.systemd.services."getty@tty1".enable
+            && !kiosk.systemd.services."autovt@tty1".enable
+            && hasInfix ''LIBINPUT_CALIBRATION_MATRIX}="0 -1 1 1 0 0"'' kiosk.services.udev.extraRules
+          ) "kiosk must keep tty1 for cage on switch and rotate touch input with the display";
+          assert nixpkgs.lib.assertMsg (
+            kiosk.services.cage.user == "kiosk"
+            && kiosk.services.getty.autologinUser == null
+            && !builtins.elem "wheel" kiosk.users.users.kiosk.extraGroups
+          ) "kiosk browser must run as an unprivileged user without console auto-login";
+          assert nixpkgs.lib.assertMsg (hasInfix "swayidle timeout 300 " kioskSession)
+            "kiosk idleTimeout must reset the browser";
           assert nixpkgs.lib.assertMsg (
             (homeOf dev).programs.kitty.enable
             && !(homeOf config).programs.kitty.enable

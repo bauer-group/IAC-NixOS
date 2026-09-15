@@ -152,11 +152,15 @@ vim /mnt/etc/nixos/params.nix
   bauergroup.params = {
     hostName = "kiosk-lobby-01";
 
+    # Admin-Konto für SSH und sudo. Der Browser läuft getrennt davon
+    # als unprivilegierter Benutzer kiosk.user (Default "kiosk").
     user = {
-      name = "kiosk";
+      name = "admin";
       sshKeys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... admin@workstation"
       ];
+      # Auf Kiosks verlangt sudo ein Passwort (mkpasswd -m sha-512)
+      hashedPassword = "$6$...";
     };
 
     network.useDHCP = true;

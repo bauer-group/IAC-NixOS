@@ -67,6 +67,10 @@ cat /etc/nixos/params.nix
 
 Das Admin-Konto hätte keinen Login: Benutzer werden deklarativ verwaltet, ein Passwort lässt sich nachträglich nicht setzen. In `/etc/nixos/params.nix` mindestens einen SSH-Key unter `user.sshKeys` oder einen Hash unter `user.hashedPassword` (`mkpasswd -m sha-512`) eintragen, siehe `params.example.nix`.
 
+### "bauergroup.params.kiosk.user ... must differ from user.name"
+
+Kiosks nach der alten Anleitung hießen im Admin-Konto `kiosk`. Der Browser läuft jetzt als eigener, unprivilegierter Benutzer mit demselben Default-Namen. Dem Browser-Konto einen neuen Namen geben (`kiosk.user = "kiosk-display";`), nicht das bestehende Konto wiederverwenden.
+
 ## Deployment-Fehler
 
 ### "Permission denied (publickey)"

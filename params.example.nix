@@ -94,11 +94,12 @@
     # ══════════════════════════════════════════════════════════════════
     kiosk = {
       url = "http://localhost:3000"; # URL to display in kiosk browser
+      # user = "kiosk";             # Unprivileged browser account, must differ from user.name
       # composeFile = /opt/kiosk/docker-compose.yml;
       # composeDirectory = "/opt/kiosk";
       # touchscreen = false;
-      # rotation = "normal";        # "normal", "left", "right", "inverted"
-      # idleTimeout = null;         # Seconds before browser resets (null = disabled)
+      # rotation = "normal";        # "normal", "left" (counter-clockwise), "right" (clockwise), "inverted"
+      # idleTimeout = null;         # Seconds without input before browser resets (null = disabled)
     };
 
     # ══════════════════════════════════════════════════════════════════
