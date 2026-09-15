@@ -270,10 +270,13 @@
 
         paths = lib.mkOption {
           type = lib.types.listOf lib.types.str;
+          # /etc/nixos holds params.nix and hardware-configuration.nix, the only
+          # machine-specific files needed to rebuild this host
           default = [
             "/opt"
             "/var/lib"
             "/home"
+            "/etc/nixos"
           ];
           description = "Paths to back up.";
         };

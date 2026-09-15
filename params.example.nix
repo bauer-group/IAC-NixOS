@@ -123,7 +123,7 @@
         enable = false;
         # repository = "sftp:backup@storage:/backups/hostname";
         # passwordFile = "/run/agenix/restic-password";
-        # paths = [ "/opt" "/var/lib" "/home" ];
+        # paths = [ "/opt" "/var/lib" "/home" "/etc/nixos" ];
       };
     };
   };
