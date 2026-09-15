@@ -26,6 +26,6 @@ in
   # Dateiname → wer darf entschlüsseln
   # "restic-password.age".publicKeys    = [ admin ] ++ allMachines;
   # "outline-env.age".publicKeys        = [ admin machine-01 ];
-  # "grafana-password.age".publicKeys   = [ admin machine-01 ];
-  # "grafana-secret-key.age".publicKeys = [ admin machine-01 ];
+  # "grafana-admin-password.age".publicKeys = [ admin machine-01 ];
+  # "grafana-secret-key.age".publicKeys     = [ admin machine-01 ];
 }

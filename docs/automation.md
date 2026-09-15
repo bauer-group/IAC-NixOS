@@ -183,7 +183,14 @@ chronyc makestep  # Erzwingt sofortige Korrektur
 
 ## Monitoring (Node Exporter)
 
-Auf Servern und Kiosks laeuft standardmaessig der Prometheus Node Exporter (Port 9100).
+Auf Servern und Kiosks laeuft standardmaessig der Prometheus Node Exporter (Port 9100). Die Metriken sind nicht authentifiziert, deshalb ist der Port nur fuer freigegebene Quellen offen, typischerweise den Monitoring-Server:
+
+```nix
+# /etc/nixos/params.nix auf dem gescrapten Host
+bauergroup.services.monitoring.nodeExporterAllowedSources = [ "10.0.0.10/32" ];
+```
+
+Ohne Eintrag bleibt der Port geschlossen; lokale Abfragen ueber `localhost` funktionieren weiter.
 
 ```bash
 # Status pruefen

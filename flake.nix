@@ -212,6 +212,7 @@
             resticPasswordFile = config.services.restic.backups.system.passwordFile;
             grafana = config.systemd.services.grafana;
             grafanaSettings = config.services.grafana.settings;
+            inherit (config.networking) firewall;
           in
           assert nixpkgs.lib.all evaluates [
             dev
@@ -254,11 +255,26 @@
             resticPasswordFile == "/run/agenix/restic-password"
           ) "backup passwordFile must stay a runtime path, got: ${resticPasswordFile}";
           assert nixpkgs.lib.assertMsg (
-            grafana.serviceConfig.LoadCredential == [ "secret_key:/run/agenix/grafana-secret-key" ]
-          ) "grafana secret key must be passed as a systemd credential";
-          assert nixpkgs.lib.assertMsg
-            (nixpkgs.lib.hasInfix "$CREDENTIALS_DIRECTORY/secret_key" grafana.preStart)
-            "grafana must refuse to start with an empty secret key";
+            grafana.serviceConfig.LoadCredential == [
+              "secret_key:/run/agenix/grafana-secret-key"
+              "admin_password:/run/agenix/grafana-admin-password"
+            ]
+          ) "grafana secret key and admin password must be passed as systemd credentials";
+          assert nixpkgs.lib.assertMsg (
+            nixpkgs.lib.hasInfix "$CREDENTIALS_DIRECTORY/secret_key" grafana.preStart
+            && nixpkgs.lib.hasInfix "$CREDENTIALS_DIRECTORY/admin_password" grafana.preStart
+          ) "grafana must refuse to start with an empty secret key or admin password";
+          assert nixpkgs.lib.assertMsg (
+            grafanaSettings.security.admin_password
+            == "$__file{/run/credentials/grafana.service/admin_password}"
+            && grafanaSettings.server.http_addr == "127.0.0.1"
+            && !builtins.elem 3100 firewall.allowedTCPPorts
+          ) "grafana must not ship default credentials or listen publicly";
+          assert nixpkgs.lib.assertMsg (
+            !builtins.elem 9100 firewall.allowedTCPPorts
+            && nixpkgs.lib.hasInfix "iptables -w -A nixos-fw -p tcp -s 10.0.0.10/32 --dport 9100 -j nixos-fw-accept" firewall.extraCommands
+            && nixpkgs.lib.hasInfix "ip6tables -w -A nixos-fw -p tcp -s fd00::10/128 --dport 9100 -j nixos-fw-accept" firewall.extraCommands
+          ) "node exporter must only be reachable from nodeExporterAllowedSources";
           assert nixpkgs.lib.assertMsg (
             !grafanaSettings.analytics.reporting_enabled
             && !grafanaSettings.analytics.check_for_updates

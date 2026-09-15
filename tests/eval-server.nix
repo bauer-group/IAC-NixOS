@@ -20,5 +20,10 @@ _: {
   bauergroup.services.monitoring = {
     enable = true;
     grafanaSecretKeyFile = /run/agenix/grafana-secret-key;
+    grafanaAdminPasswordFile = /run/agenix/grafana-admin-password;
+    nodeExporterAllowedSources = [
+      "10.0.0.10/32"
+      "fd00::10/128"
+    ];
   };
 }

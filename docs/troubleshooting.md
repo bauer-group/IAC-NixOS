@@ -188,9 +188,11 @@ systemctl status prometheus-node-exporter
 # Port prüfen
 ss -tlnp | grep 9100
 
-# Firewall prüfen (Port 9100 muss offen sein)
-sudo iptables -L INPUT -n | grep 9100
+# Firewall prüfen: 9100 ist nur für nodeExporterAllowedSources offen
+sudo iptables -L nixos-fw -n | grep 9100
 ```
+
+Scrapt der Monitoring-Server den Host nicht, fehlt meist seine IP in `bauergroup.services.monitoring.nodeExporterAllowedSources` auf dem gescrapten Host. Ohne Eintrag bleibt der Port zu, lokal (`localhost:9100`) funktioniert er weiter.
 
 ### Grafana nicht erreichbar
 
@@ -198,11 +200,15 @@ sudo iptables -L INPUT -n | grep 9100
 # Service prüfen
 systemctl status grafana
 
-# Startet nicht? Secret Key vorhanden? (grafanaSecretKeyFile, siehe docs/secrets.md)
-journalctl -u grafana -n 50 | grep -iE "credential|secret"
+# Startet nicht? Secret Key und Admin-Passwort vorhanden?
+# (grafanaSecretKeyFile, grafanaAdminPasswordFile, siehe docs/secrets.md)
+journalctl -u grafana -n 50 | grep -iE "credential|secret|password"
 
-# Default-Port: 3100
+# Lauscht nur auf localhost, Default-Port 3100
 curl http://localhost:3100/api/health
+
+# Vom Arbeitsplatz aus per SSH-Tunnel öffnen: http://localhost:3100
+ssh -L 3100:localhost:3100 admin@srv-prod-01
 ```
 
 ### Grafana-Plugins fehlen

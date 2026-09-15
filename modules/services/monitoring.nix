@@ -5,7 +5,9 @@
 #
 # Deploy on ONE server (typically prod-server-01) to scrape all hosts.
 # Enable node exporter on ALL servers via bauergroup.services.monitoring.exporterOnly.
-# The full stack requires grafanaSecretKeyFile (see docs/secrets.md).
+# The node exporter port is only reachable from nodeExporterAllowedSources.
+# The full stack requires grafanaSecretKeyFile and grafanaAdminPasswordFile
+# (see docs/secrets.md). Grafana listens on localhost only by default.
 # Grafana makes no outbound connections; add plugins via
 # services.grafana.declarativePlugins instead of downloads from grafana.com.
 # ─────────────────────────────────────────────────────────────────────
@@ -16,6 +18,22 @@
 }:
 let
   cfg = config.bauergroup.services.monitoring;
+
+  # iptables and ip6tables need separate rules: ip6tables rejects IPv4 CIDRs
+  # and firewall-start aborts on the first failing command
+  isIPv6 = lib.hasInfix ":";
+  ipv4Sources = lib.filter (source: !isIPv6 source) cfg.nodeExporterAllowedSources;
+  ipv6Sources = lib.filter isIPv6 cfg.nodeExporterAllowedSources;
+  exporterPort = toString cfg.nodeExporterPort;
+
+  iptablesRule =
+    command: source:
+    "${command} -w -A nixos-fw -p tcp -s ${source} --dport ${exporterPort} -j nixos-fw-accept\n";
+  nftablesRule =
+    family: sources:
+    lib.optionalString (
+      sources != [ ]
+    ) "${family} saddr { ${lib.concatStringsSep ", " sources} } tcp dport ${exporterPort} accept\n";
 in
 {
   options.bauergroup.services.monitoring = {
@@ -27,6 +45,28 @@ in
       type = lib.types.port;
       default = 3100;
       description = "Port for Grafana web UI.";
+    };
+
+    grafanaListenAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = ''
+        Address Grafana listens on. The default keeps it reachable only through a
+        reverse proxy or an SSH tunnel. Grafana serves plain HTTP, so a non-loopback
+        address also needs a firewall rule of your own (e.g. network.openPorts).
+      '';
+    };
+
+    grafanaAdminPasswordFile = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        Path on the target machine to the file holding the Grafana admin password
+        (e.g. an agenix secret). The file may stay root-only; it is passed to Grafana
+        as a systemd credential. Grafana applies it only when it creates the admin
+        user on first start; change an existing password with
+        `grafana cli admin reset-admin-password`.
+      '';
+      example = "/run/agenix/grafana-admin-password";
     };
 
     grafanaSecretKeyFile = lib.mkOption {
@@ -51,6 +91,24 @@ in
       type = lib.types.port;
       default = 9100;
       description = "Port for Prometheus node exporter.";
+    };
+
+    nodeExporterAllowedSources = lib.mkOption {
+      # Validated here because the entries end up in the firewall script, which
+      # aborts on the first bad rule and would leave the host without a firewall
+      type = lib.types.listOf (
+        lib.types.strMatching "([0-9]{1,3}\\.){3}[0-9]{1,3}(/[0-9]{1,2})?|[0-9a-fA-F:]*:[0-9a-fA-F:.]*(/[0-9]{1,3})?"
+      );
+      default = [ ];
+      description = ''
+        IPv4/IPv6 addresses or CIDRs (no hostnames) allowed to reach the node exporter, typically the
+        monitoring server. The exporter serves unauthenticated host metrics, so its
+        port stays closed when this is empty; local scrapes via localhost still work.
+      '';
+      example = [
+        "10.0.0.10/32"
+        "fd00::10/128"
+      ];
     };
 
     scrapeTargets = lib.mkOption {
@@ -122,7 +180,26 @@ in
           "loadavg"
         ];
       };
-      networking.firewall.allowedTCPPorts = [ cfg.nodeExporterPort ];
+
+      # Source-restricted rules instead of allowedTCPPorts, which would
+      # accept every source before these rules are reached
+      networking.firewall.extraCommands = lib.mkIf (!config.networking.nftables.enable) (
+        lib.concatMapStrings (iptablesRule "iptables") ipv4Sources
+        + lib.optionalString config.networking.enableIPv6 (
+          lib.concatMapStrings (iptablesRule "ip6tables") ipv6Sources
+        )
+      );
+      networking.firewall.extraInputRules = lib.mkIf config.networking.nftables.enable (
+        nftablesRule "ip" ipv4Sources + nftablesRule "ip6" ipv6Sources
+      );
+
+      assertions = [
+        {
+          assertion =
+            config.networking.firewall.backend != "firewalld" || cfg.nodeExporterAllowedSources == [ ];
+          message = "bauergroup.services.monitoring.nodeExporterAllowedSources supports the iptables and nftables firewall backends only.";
+        }
+      ];
     })
 
     # Full stack — only on the monitoring server
@@ -159,13 +236,12 @@ in
         settings = {
           server = {
             http_port = cfg.grafanaPort;
-            http_addr = "0.0.0.0";
+            http_addr = cfg.grafanaListenAddress;
           };
-          # Default admin credentials — change on first login or use agenix
           security = {
             admin_user = "admin";
-            admin_password = "admin";
-            # Expanded by Grafana at startup from the credential loaded below
+            # Expanded by Grafana at startup from the credentials loaded below
+            admin_password = "$__file{/run/credentials/grafana.service/admin_password}";
             secret_key = "$__file{/run/credentials/grafana.service/secret_key}";
             # Browsers would otherwise load avatars (email hashes) from gravatar.com
             disable_gravatar = true;
@@ -199,24 +275,25 @@ in
       };
 
       systemd.services.grafana = {
-        # systemd reads the key as root, so the source file can stay root-only.
+        # systemd reads the files as root, so the sources can stay root-only.
         # toString keeps a path literal from being copied into the Nix store.
         serviceConfig.LoadCredential = [
           "secret_key:${toString cfg.grafanaSecretKeyFile}"
+          "admin_password:${toString cfg.grafanaAdminPasswordFile}"
         ];
 
-        # Grafana starts silently with an empty key, so refuse that here
+        # Grafana starts silently with an empty key or password, so refuse that here
         preStart = lib.mkBefore ''
           if ! grep -q '[^[:space:]]' "$CREDENTIALS_DIRECTORY/secret_key"; then
             echo "Grafana secret key ${toString cfg.grafanaSecretKeyFile} is empty" >&2
             exit 1
           fi
+          if ! grep -q '[^[:space:]]' "$CREDENTIALS_DIRECTORY/admin_password"; then
+            echo "Grafana admin password ${toString cfg.grafanaAdminPasswordFile} is empty" >&2
+            exit 1
+          fi
         '';
       };
-
-      networking.firewall.allowedTCPPorts = [
-        cfg.grafanaPort
-      ];
     })
   ];
 }
