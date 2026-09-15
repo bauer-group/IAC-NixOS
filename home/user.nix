@@ -1,7 +1,7 @@
 # home/user.nix
 # ─────────────────────────────────────────────────────────────────────
 # Parametric Home Manager configuration.
-# Reads user identity from bauergroup.params.user (passed via extraSpecialArgs).
+# Reads user identity from bauergroup.params.user (via osConfig).
 # ─────────────────────────────────────────────────────────────────────
 {
   lib,
@@ -11,6 +11,7 @@
 }:
 let
   userParams = osConfig.bauergroup.params.user;
+  isDesktop = osConfig.bauergroup.params.autoUpdate.template == "desktop-dev";
 in
 {
   imports = [ ./common.nix ];
@@ -41,9 +42,9 @@ in
     sideloadInitLua = true;
   };
 
-  # ── Kitty Terminal (only useful on desktop templates) ──────────────
+  # ── Kitty Terminal (desktop-dev only: GUI, uses its JetBrains Mono) ─
   programs.kitty = {
-    enable = true;
+    enable = isDesktop;
     settings = {
       font_family = "JetBrains Mono";
       font_size = 12;
