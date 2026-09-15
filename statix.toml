@@ -1,0 +1,4 @@
+# statix configuration (read by checks.lint and the pre-commit hook)
+# repeated_keys: modules deliberately set flat dotted options such as
+# boot.loader.* and boot.kernelPackages next to their own comments
+disabled = [ "repeated_keys" ]

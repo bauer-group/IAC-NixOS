@@ -56,8 +56,7 @@ in
   config = lib.mkIf cfg.enable {
     virtualisation.docker = {
       enable = true;
-      enableOnBoot = cfg.enableOnBoot;
-      storageDriver = cfg.storageDriver;
+      inherit (cfg) enableOnBoot storageDriver;
 
       # Live restore: containers keep running during daemon restart
       liveRestore = true;

@@ -38,9 +38,9 @@ pkgs.testers.nixosTest {
     # Verify firewall is active
     server.succeed("systemctl is-active firewall.service")
 
-    # Verify web ports are allowed
-    server.succeed("iptables -L INPUT -n | grep '80'")
-    server.succeed("iptables -L INPUT -n | grep '443'")
+    # Verify web ports are allowed (NixOS keeps its rules in the nixos-fw chain)
+    server.succeed("iptables -L nixos-fw -n | grep -w 'dpt:80'")
+    server.succeed("iptables -L nixos-fw -n | grep -w 'dpt:443'")
 
     # Verify TCP SYN cookies are enabled
     server.succeed("sysctl net.ipv4.tcp_syncookies | grep '= 1'")

@@ -22,7 +22,7 @@ in
       enable = true;
       flake = flakeRef;
       dates = cfg.schedule;
-      allowReboot = cfg.allowReboot;
+      inherit (cfg) allowReboot;
       rebootWindow = {
         lower = cfg.rebootWindowStart;
         upper = cfg.rebootWindowEnd;

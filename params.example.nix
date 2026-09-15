@@ -11,7 +11,7 @@
 #   desktop-kiosk  — Kiosk display (fullscreen browser + Docker backend)
 #   server         — Headless server (Docker services, hardened)
 # ─────────────────────────────────────────────────────────────────────
-{ ... }:
+{ pkgs, ... }:
 {
   bauergroup.params = {
 

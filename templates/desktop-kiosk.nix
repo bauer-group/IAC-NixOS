@@ -22,7 +22,7 @@
 }:
 let
   params = config.bauergroup.params;
-  kiosk = params.kiosk;
+  inherit (params) kiosk;
   userParams = params.user;
 
   # Chromium kiosk launch command

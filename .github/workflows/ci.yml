@@ -10,6 +10,9 @@ on:
       - "**.md"
       - "LICENSE"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,6 +21,7 @@ jobs:
   lint:
     name: 🔎 Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -29,7 +33,31 @@ jobs:
             accept-flake-config = true
 
       - name: 🔎 statix + deadnix
-        run: nix build .#checks.x86_64-linux.lint --no-link
+        run: nix build .#checks.x86_64-linux.lint --no-link -L
 
-      - name: 🧪 Template evaluation
-        run: nix build .#checks.x86_64-linux.template-eval --no-link
+      - name: 🧪 Template evaluation (all templates)
+        run: nix build .#checks.x86_64-linux.template-eval --no-link -L
+
+  vm-tests:
+    name: 🖥️ VM tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: ❄️ Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          # The action grants the runner access to /dev/kvm before installing Nix
+          enable_kvm: true
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+            system-features = nixos-test benchmark big-parallel kvm uid-range
+
+      - name: 🧪 NixOS VM tests
+        run: >-
+          nix build --no-link -L
+          .#checks.x86_64-linux.firewall
+          .#checks.x86_64-linux.ssh-hardening
+          .#checks.x86_64-linux.docker-service

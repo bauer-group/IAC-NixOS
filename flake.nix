@@ -161,29 +161,68 @@
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
         pre-commit = pre-commit-check;
+
+        # NixOS VM tests (need KVM; CI enables it on the runner)
+        firewall = import ./tests/firewall.nix { inherit pkgs; };
+        ssh-hardening = import ./tests/ssh-hardening.nix { inherit pkgs; };
+        docker-service = import ./tests/docker-service.nix { inherit pkgs; };
+        # Example files are edited per machine and keep placeholder bindings
         lint =
           pkgs.runCommand "lint"
             {
               nativeBuildInputs = with pkgs; [
                 deadnix
+                statix
               ];
             }
             ''
               cd ${self}
-              deadnix . --exclude params.example.nix
+              deadnix --fail . --exclude params.example.nix secrets/secrets.nix
+              # statix exits 0 when it cannot read its config, so require the file
+              test -f statix.toml
+              statix check --config statix.toml .
               touch $out
             '';
 
-        # Evaluates the server template with fixed params instead of /etc/nixos
+        # Evaluates every template with fixed params instead of /etc/nixos
         template-eval =
           let
-            inherit (mkSystem "server" [ ./tests/eval-params.nix ]) config;
+            evalTemplate =
+              name:
+              (mkSystem name [
+                ./tests/eval-params.nix
+                ./tests/eval-${name}.nix
+              ]).config;
+
+            # The drvPath forces every module, assertion and Home Manager config
+            # without building anything; dropping the context avoids a build dependency
+            evaluates = cfg: builtins.unsafeDiscardStringContext cfg.system.build.toplevel.drvPath != "";
+
+            dev = evalTemplate "desktop-dev";
+            kiosk = evalTemplate "desktop-kiosk";
+            homeOf = cfg: cfg.home-manager.users.admin;
+
+            config = evalTemplate "server";
             upgradeFlags = toString config.system.autoUpgrade.flags;
             composePreStart = config.systemd.services.compose-app.preStart;
             resticPasswordFile = config.services.restic.backups.system.passwordFile;
             grafana = config.systemd.services.grafana;
             grafanaSettings = config.services.grafana.settings;
           in
+          assert nixpkgs.lib.all evaluates [
+            dev
+            kiosk
+            config
+          ];
+          assert nixpkgs.lib.assertMsg (
+            (homeOf dev).programs.kitty.enable
+            && !(homeOf config).programs.kitty.enable
+            && (homeOf dev).programs.zsh.shellAliases ? candump0
+            && !((homeOf config).programs.zsh.shellAliases ? candump0)
+            &&
+              (homeOf config).programs.zsh.shellAliases.nrs
+              == "sudo nixos-rebuild switch --flake .#server --impure"
+          ) "Home Manager must only ship desktop and CAN tooling where it applies";
           assert nixpkgs.lib.assertMsg
             (nixpkgs.lib.hasInfix "--flake github:bauer-group/IAC-NixOS#server" upgradeFlags)
             "auto-update must target #server, got: ${upgradeFlags}";

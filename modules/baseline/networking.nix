@@ -20,8 +20,7 @@ in
   networking.interfaces.${net.interface} = lib.mkIf (!net.useDHCP) {
     ipv4.addresses = [
       {
-        address = net.address;
-        prefixLength = net.prefixLength;
+        inherit (net) address prefixLength;
       }
     ];
   };
