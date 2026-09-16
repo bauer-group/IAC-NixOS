@@ -4,6 +4,28 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [4.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v3.1.0...v4.0.0) (2026-09-16)
+
+### ⚠ BREAKING CHANGES
+
+* **monitoring:** a monitoring server with bauergroup.services.monitoring.enable
+  now requires grafanaAdminPasswordFile and is reachable on localhost only;
+  set grafanaListenAddress to expose it. Hosts scraped remotely need the
+  monitoring server's address in nodeExporterAllowedSources, otherwise
+  port 9100 stays closed.
+* **kiosk:** the kiosk browser now runs as bauergroup.params.kiosk.user
+  (default "kiosk") instead of the admin account. Machines whose admin is
+  named "kiosk" (per the older docs) fail to evaluate until kiosk.user is
+  set to an unused name, e.g. kiosk.user = "kiosk-display".
+
+### 🐛 Bug Fixes
+
+* **backup:** backed up /etc/nixos by default ([58eb2de](https://github.com/bauer-group/IAC-NixOS/commit/58eb2de0b0993ca445d6b7832a179496909aa6d2))
+* **home:** scoped the user environment to the machine's template ([d1fa9b9](https://github.com/bauer-group/IAC-NixOS/commit/d1fa9b9b8747dd72e5f43a2e642ca16eccf0cf15))
+* **kiosk:** ran the browser as its own user and repaired the session ([364355f](https://github.com/bauer-group/IAC-NixOS/commit/364355f9ed7c535d62edca1fd8c475e00d088a82))
+* **monitoring:** closed the exporter and Grafana to the network ([a3fd11e](https://github.com/bauer-group/IAC-NixOS/commit/a3fd11eac6e312f6bb1b88f1caeba4cd5276b948))
+* **users:** required a login credential for the primary account ([2c7cfe6](https://github.com/bauer-group/IAC-NixOS/commit/2c7cfe6c7812b4e28aae855291a44daa6e32c5bd))
+
 ## [3.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v3.0.1...v3.1.0) (2026-09-14)
 
 ### 🚀 Features
