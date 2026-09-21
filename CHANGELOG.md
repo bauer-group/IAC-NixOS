@@ -4,6 +4,12 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [4.1.0](https://github.com/bauer-group/IAC-NixOS/compare/v4.0.0...v4.1.0) (2026-09-21)
+
+### 🚀 Features
+
+* **kiosk:** added kiosk runtime for web and native HMI ([6970f48](https://github.com/bauer-group/IAC-NixOS/commit/6970f484a2d22ece5fbae46f6ff300eed440eef5)), references [#F57E13](https://github.com/bauer-group/IAC-NixOS/issues/F57E13) [#FF8500](https://github.com/bauer-group/IAC-NixOS/issues/FF8500) [#FF8500](https://github.com/bauer-group/IAC-NixOS/issues/FF8500)
+
 ## [4.0.0](https://github.com/bauer-group/IAC-NixOS/compare/v3.1.0...v4.0.0) (2026-09-16)
 
 ### ⚠ BREAKING CHANGES
