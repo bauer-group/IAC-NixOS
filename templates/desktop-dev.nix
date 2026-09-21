@@ -23,7 +23,7 @@ in
     ../modules/baseline/networking.nix
     ../modules/baseline/nix.nix
     ../modules/baseline/auto-update.nix
-    ../modules/services/docker.nix
+    ../modules/baseline/platform.nix
     ../modules/features/embedded-dev.nix
   ];
 
@@ -115,11 +115,11 @@ in
       go
       dotnet-sdk_8
 
-      # Containers
-      docker
-      docker-compose
-      lazydocker
+      # Containers — the engine's own CLI and compose come from
+      # bauergroup.services.containers; podman is here as a second engine to
+      # test images against, not as this machine's engine
       podman
+      dive
 
       # Network / Debug
       wireshark
@@ -145,11 +145,15 @@ in
     ]
     ++ params.dev.extraPackages;
 
-  # ── Docker (on-demand, not on boot) ────────────────────────────────
-  bauergroup.services.docker = {
-    enable = lib.mkDefault true;
-    enableOnBoot = lib.mkDefault false;
-  };
+  # ── Containers (on-demand, not on boot) ────────────────────────────
+  bauergroup.services.containers.enableOnBoot = lib.mkDefault false;
+
+  # ── Watchdog ───────────────────────────────────────────────────────
+  # Long timeout on purpose. A frozen workstation should still come back, but
+  # a developer machine legitimately stalls systemd for tens of seconds under
+  # a heavy build or a swap storm, and a reset that interrupts that destroys
+  # unsaved work — the opposite of what the watchdog is for.
+  bauergroup.params.watchdog.runtimeTime = lib.mkDefault "5min";
 
   # ── Keyboard ───────────────────────────────────────────────────────
   services.xserver.xkb = {

@@ -60,4 +60,4 @@ jobs:
           nix build --no-link -L
           .#checks.x86_64-linux.firewall
           .#checks.x86_64-linux.ssh-hardening
-          .#checks.x86_64-linux.docker-service
+          .#checks.x86_64-linux.container-engine

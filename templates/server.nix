@@ -15,6 +15,15 @@
 let
   params = config.bauergroup.params;
   serverParams = params.server;
+
+  inherit (config.bauergroup.services.containers) composeCommand;
+  # Docker has a daemon to wait for; Podman is daemonless and reached through a
+  # socket-activated unit, so each engine has its own thing to order behind
+  engineUnit =
+    if config.bauergroup.services.containers.engine == "docker" then
+      "docker.service"
+    else
+      "podman.socket";
 in
 {
   imports = [
@@ -24,7 +33,7 @@ in
     ../modules/baseline/networking.nix
     ../modules/baseline/nix.nix
     ../modules/baseline/auto-update.nix
-    ../modules/services/docker.nix
+    ../modules/baseline/platform.nix
     ../modules/services/monitoring.nix
     ../modules/services/backup.nix
   ];
@@ -70,32 +79,31 @@ in
   # ── Networking ─────────────────────────────────────────────────────
   boot.kernel.sysctl."net.ipv6.conf.all.accept_ra" = lib.mkForce 2;
 
-  # ── Docker ─────────────────────────────────────────────────────────
-  bauergroup.services.docker = {
-    enable = true;
-    enableOnBoot = true;
-  };
+  # ── Containers ─────────────────────────────────────────────────────
+  bauergroup.services.containers.enableOnBoot = lib.mkDefault true;
 
-  # ── Dynamic Docker Compose Services ────────────────────────────────
-  # Creates a systemd service for each entry in bauergroup.params.server.composeProjects
+  # ── Dynamic Compose Services ───────────────────────────────────────
+  # Creates a systemd service for each entry in bauergroup.params.server.composeProjects.
+  # Engine-independent: Podman serves the same API socket, and only Docker has
+  # a daemon unit to order against.
   systemd.services = lib.mapAttrs' (
     name: project:
     lib.nameValuePair "compose-${name}" {
-      description = "Docker Compose: ${name}";
+      description = "Compose project: ${name}";
       wantedBy = [ "multi-user.target" ];
       wants = [ "network-online.target" ];
       after = [
-        "docker.service"
         "network-online.target"
+        engineUnit
       ];
-      requires = [ "docker.service" ];
+      requires = [ engineUnit ];
 
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
         WorkingDirectory = project.directory;
-        ExecStart = "${pkgs.docker-compose}/bin/docker-compose up -d";
-        ExecStop = "${pkgs.docker-compose}/bin/docker-compose down";
+        ExecStart = "${composeCommand} up -d";
+        ExecStop = "${composeCommand} down";
         TimeoutStartSec = "120";
 
         # Hardening

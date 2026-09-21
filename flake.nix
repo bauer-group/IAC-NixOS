@@ -148,6 +148,7 @@
       nixosConfigurations = {
         desktop-dev = mkTemplate "desktop-dev";
         desktop-kiosk = mkTemplate "desktop-kiosk";
+        embedded-kiosk = mkTemplate "embedded-kiosk";
         server = mkTemplate "server";
       };
 
@@ -165,7 +166,7 @@
         # NixOS VM tests (need KVM; CI enables it on the runner)
         firewall = import ./tests/firewall.nix { inherit pkgs; };
         ssh-hardening = import ./tests/ssh-hardening.nix { inherit pkgs; };
-        docker-service = import ./tests/docker-service.nix { inherit pkgs; };
+        container-engine = import ./tests/container-engine.nix { inherit pkgs; };
         # Example files are edited per machine and keep placeholder bindings
         lint =
           pkgs.runCommand "lint"
@@ -202,9 +203,27 @@
 
             dev = evalTemplate "desktop-dev";
             kiosk = evalTemplate "desktop-kiosk";
+            embedded = evalTemplate "embedded-kiosk";
+
+            # A board with no watchdog silicon still wants freeze detection, so
+            # turning off the hardware reset must not take the application
+            # probe with it
+            kioskNoHwWatchdog =
+              (mkSystem "desktop-kiosk" [
+                ./tests/eval-params.nix
+                ./tests/eval-desktop-kiosk.nix
+                { bauergroup.params.watchdog.enable = false; }
+              ]).config;
             kioskSession = kiosk.services.cage.program.text;
+            embeddedSession = embedded.services.cage.program.text;
             cage = kiosk.systemd.services.cage-tty1;
             homeOf = cfg: cfg.home-manager.users.admin;
+
+            # Every template must arm the hardware watchdog, and must do it
+            # through the option that is not deprecated
+            watchdogOf = cfg: cfg.systemd.settings.Manager;
+            containersOf = cfg: cfg.bauergroup.services.containers;
+            appWatchdogOf = cfg: cfg.bauergroup.services.watchdog.application;
 
             config = evalTemplate "server";
             upgradeFlags = toString config.system.autoUpgrade.flags;
@@ -217,11 +236,16 @@
           assert nixpkgs.lib.all evaluates [
             dev
             kiosk
+            embedded
             config
           ];
           assert nixpkgs.lib.assertMsg (
-            kiosk.services.cage.extraArguments == [ ] && hasInfix "--transform 90" kioskSession
+            !builtins.elem "-r" kiosk.services.cage.extraArguments && hasInfix "--transform 90" kioskSession
           ) "kiosk rotation must use wlr-randr: cage 0.3 exits on -r";
+          assert nixpkgs.lib.assertMsg (
+            !builtins.elem "-s" kiosk.services.cage.extraArguments
+            && !builtins.elem "-s" embedded.services.cage.extraArguments
+          ) "kiosk must not allow VT switching: Ctrl+Alt+F2 would reach a login prompt";
           assert nixpkgs.lib.assertMsg (
             cage.serviceConfig.Restart == "always" && cage.restartIfChanged
           ) "kiosk session must restart after a crash and on config changes";
@@ -237,6 +261,109 @@
           ) "kiosk browser must run as an unprivileged user without console auto-login";
           assert nixpkgs.lib.assertMsg (hasInfix "swayidle timeout 300 " kioskSession)
             "kiosk idleTimeout must reset the browser";
+          assert nixpkgs.lib.assertMsg (nixpkgs.lib.all
+            (
+              groups:
+              nixpkgs.lib.intersectLists groups [
+                "wheel"
+                "docker"
+                "podman"
+              ] == [ ]
+            )
+            [
+              kiosk.users.users.kiosk.extraGroups
+              embedded.users.users.kiosk.extraGroups
+            ]
+          ) "kiosk session account must not be root-equivalent through wheel or a container socket group";
+
+          # ── Kiosk payloads ────────────────────────────────────────────
+          assert nixpkgs.lib.assertMsg (
+            hasInfix "--ozone-platform=wayland" kioskSession && hasInfix "--kiosk" kioskSession
+          ) "browser kiosk must run Chromium natively on Wayland, not through XWayland";
+          assert nixpkgs.lib.assertMsg (
+            hasInfix "/opt/hmi/BauerGroup.Hmi" embeddedSession && !hasInfix "chromium" embeddedSession
+          ) "application kiosk must launch the HMI binary and pull in no browser";
+          assert nixpkgs.lib.assertMsg (
+            embedded.services.cage.environment ? DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+            && builtins.elem "dialout" embedded.users.users.kiosk.extraGroups
+          ) "application kiosk must pass its environment and device groups to the session";
+          assert nixpkgs.lib.assertMsg (
+            embedded.programs.nix-ld.enable && !kiosk.programs.nix-ld.enable
+          ) "a dotnet publish output needs the loader NixOS lacks; a browser kiosk does not";
+
+          # ── Container engine ──────────────────────────────────────────
+          assert nixpkgs.lib.assertMsg (
+            (containersOf kiosk).engine == "docker" && kiosk.virtualisation.docker.enable
+          ) "desktop-kiosk must default to the Docker engine";
+          assert nixpkgs.lib.assertMsg (
+            (containersOf embedded).engine == "podman"
+            && embedded.virtualisation.podman.dockerCompat
+            && embedded.virtualisation.podman.dockerSocket.enable
+            && embedded.virtualisation.podman.defaultNetwork.settings.dns_enabled
+            && !embedded.virtualisation.docker.enable
+          ) "podman must serve the Docker socket with DNS and must not pull in a Docker daemon";
+          assert nixpkgs.lib.assertMsg (
+            (containersOf kiosk).composeCommand == (containersOf embedded).composeCommand
+          ) "compose units must be engine-independent: both engines take the same compose binary";
+          assert nixpkgs.lib.assertMsg (
+            kiosk.systemd.services.kiosk-backend.requires == [ "docker.service" ]
+            && embedded.systemd.services.kiosk-backend.requires == [ "podman.socket" ]
+          ) "a compose backend must order behind whatever its engine actually provides";
+
+          # ── Watchdog ──────────────────────────────────────────────────
+          assert nixpkgs.lib.assertMsg (nixpkgs.lib.all (cfg: (watchdogOf cfg).RuntimeWatchdogSec != null) [
+            dev
+            kiosk
+            embedded
+            config
+          ]) "every template must arm the hardware watchdog";
+          assert nixpkgs.lib.assertMsg (
+            (watchdogOf dev).RuntimeWatchdogSec == "5min"
+          ) "desktop-dev needs a long watchdog timeout: a heavy build must not trigger a reset";
+          assert nixpkgs.lib.assertMsg (
+            (appWatchdogOf kiosk).enable
+            && (appWatchdogOf kiosk).unit == "cage-tty1.service"
+            && hasInfix "9222/json/version" (appWatchdogOf kiosk).healthCheckCommand
+            && hasInfix "--remote-debugging-port=9222" kioskSession
+          ) "browser kiosk must probe the DevTools endpoint it actually opens";
+          # The unit itself, not just the option: the probe once lived inside
+          # the hardware watchdog's mkIf and silently vanished without it
+          assert nixpkgs.lib.assertMsg (
+            kiosk.systemd.timers ? bauergroup-app-watchdog
+            && kioskNoHwWatchdog.systemd.timers ? bauergroup-app-watchdog
+            && !(kioskNoHwWatchdog.systemd.settings.Manager ? RuntimeWatchdogSec)
+          ) "freeze detection must not depend on the hardware watchdog being enabled";
+          # Without a grace period the session's own backend wait fails the
+          # first probes, and restart escalates to reboot to a boot loop
+          assert nixpkgs.lib.assertMsg (
+            (appWatchdogOf kiosk).startupGrace > 60
+          ) "the probe must ignore failures while the session is still starting";
+          assert nixpkgs.lib.assertMsg (
+            (appWatchdogOf embedded).enable
+            && hasInfix "8080/healthz" (appWatchdogOf embedded).healthCheckCommand
+            && !hasInfix "--remote-debugging-port" embeddedSession
+          ) "application kiosk must use its own probe and open no browser debug port";
+          assert nixpkgs.lib.assertMsg (builtins.elem "iTCO_wdt" embedded.boot.kernelModules)
+            "embedded-kiosk must load the watchdog driver named in params";
+
+          # ── Boot splash ───────────────────────────────────────────────
+          assert nixpkgs.lib.assertMsg (
+            kiosk.boot.plymouth.enable
+            && kiosk.boot.plymouth.theme == "bauergroup"
+            && embedded.boot.plymouth.enable
+            && !config.boot.plymouth.enable
+            && !dev.boot.plymouth.enable
+          ) "the boot splash belongs on kiosk machines, not on servers or developer desktops";
+          assert nixpkgs.lib.assertMsg (
+            builtins.elem "quiet" kiosk.boot.kernelParams && builtins.elem "splash" kiosk.boot.kernelParams
+          ) "a branded splash must not be overdrawn by kernel log output";
+
+          # ── Embedded update policy ────────────────────────────────────
+          assert nixpkgs.lib.assertMsg (
+            !embedded.bauergroup.params.autoUpdate.allowReboot
+            && embedded.system.autoUpgrade.enable
+            && kiosk.bauergroup.params.autoUpdate.allowReboot
+          ) "an HMI on a production line must update without rebooting itself";
           assert nixpkgs.lib.assertMsg (
             (homeOf dev).programs.kitty.enable
             && !(homeOf config).programs.kitty.enable

@@ -245,7 +245,7 @@ builtins.attrNames (import ./overlays { nixpkgs-unstable = inputs.nixpkgs-unstab
 # Welche Optionen sind verfügbar?
 nixos-option bauergroup.params
 nixos-option bauergroup.params.user
-nixos-option bauergroup.services.docker
+nixos-option bauergroup.services.containers
 
 # Online: https://search.nixos.org/options
 ```

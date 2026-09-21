@@ -57,15 +57,51 @@ echo ""
 echo "Disk:"
 check "Root filesystem < 85% full" "test \$(df / --output=pcent | tail -1 | tr -d ' %') -lt 85"
 
-# ── Docker ────────────────────────────────────
+# ── Containers ────────────────────────────────
+# Both engines answer on /run/docker.sock, so probe the socket rather than a
+# daemon unit: Podman is daemonless and has no docker.service to look for
 echo ""
-echo "Docker:"
-if ssh "root@${HOST}" "systemctl is-active docker.service" >/dev/null 2>&1; then
-  check "Docker running" "docker info > /dev/null 2>&1"
+echo "Containers:"
+if ssh "root@${HOST}" "test -S /run/docker.sock" >/dev/null 2>&1; then
+  ENGINE=$(ssh "root@${HOST}" "docker version --format '{{.Server.Product}}' 2>/dev/null || echo unknown" 2>/dev/null)
+  echo -e "  Engine: ${ENGINE}"
+  check "Container engine responding" "docker info > /dev/null 2>&1"
   CONTAINERS=$(ssh "root@${HOST}" "docker ps -q 2>/dev/null | wc -l" 2>/dev/null || echo "0")
   echo -e "  Containers running: ${CONTAINERS}"
 else
-  echo -e "  ${YELLOW}-${NC} Docker not enabled on this host"
+  echo -e "  ${YELLOW}-${NC} No container engine on this host"
+fi
+
+# ── Watchdog ──────────────────────────────────
+# A panel with no /dev/watchdog has no automatic recovery at all, and that is
+# invisible until the day it freezes — so surface it at deployment time
+echo ""
+echo "Watchdog:"
+if ssh "root@${HOST}" "test -c /dev/watchdog" >/dev/null 2>&1; then
+  WDINFO=$(ssh "root@${HOST}" "wdctl --noheadings --output=FLAG,DESCRIPTION 2>/dev/null | head -1 || true" 2>/dev/null)
+  check "Hardware watchdog present" "test -c /dev/watchdog"
+  [ -n "${WDINFO}" ] && echo -e "  ${WDINFO}"
+else
+  echo -e "  ${YELLOW}!${NC} No /dev/watchdog — this host cannot recover from a freeze"
+  echo -e "    Name the driver in watchdog.kernelModules (iTCO_wdt, sp5100_tco, it87_wdt)"
+fi
+
+# ── Kiosk session ─────────────────────────────
+echo ""
+echo "Kiosk:"
+# systemctl cat fails outright on an unknown unit, unlike list-unit-files,
+# which happily exits 0 with an empty list
+if ssh "root@${HOST}" "systemctl cat cage-tty1.service" >/dev/null 2>&1; then
+  check "Kiosk session running" "systemctl is-active cage-tty1.service"
+  RESTARTS=$(ssh "root@${HOST}" "systemctl show cage-tty1.service -p NRestarts --value 2>/dev/null" 2>/dev/null || echo "?")
+  echo -e "  Session restarts since boot: ${RESTARTS}"
+  if ssh "root@${HOST}" "systemctl is-active bauergroup-app-watchdog.timer" >/dev/null 2>&1; then
+    echo -e "  ${GREEN}✓${NC} Freeze watchdog armed"
+  else
+    echo -e "  ${YELLOW}-${NC} Freeze watchdog not armed (no health probe configured)"
+  fi
+else
+  echo -e "  ${YELLOW}-${NC} Not a kiosk host"
 fi
 
 # ── Network ───────────────────────────────────

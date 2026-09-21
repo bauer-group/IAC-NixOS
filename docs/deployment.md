@@ -60,7 +60,7 @@ nix run github:nix-community/nixos-anywhere -- \
 ```bash
 # 1. Änderungen im Repo machen (lokal)
 vim templates/server.nix
-vim modules/services/docker.nix
+vim modules/services/containers.nix
 
 # 2. Formatierung prüfen
 nix fmt

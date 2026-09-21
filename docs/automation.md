@@ -128,18 +128,19 @@ sudo nix-collect-garbage -d
 du -sh /nix/store
 ```
 
-## Docker Auto-Prune
+## Container Auto-Prune
 
-Unbenutzte Docker Images und Container werden woechentlich bereinigt.
+Unbenutzte Images und Container werden woechentlich bereinigt — unabhaengig
+davon, ob die Maschine Docker oder Podman faehrt.
 
 ```bash
-# Konfiguriert in modules/services/docker.nix:
+# Konfiguriert in modules/services/containers.nix:
 # autoPrune.enable = true
 # autoPrune.dates = "weekly"
 # autoPrune.flags = ["--all" "--filter" "until=168h"]
 
-# Status pruefen
-systemctl list-timers | grep docker-prune
+# Status pruefen (Timer heisst nach der Engine: docker-prune | podman-prune)
+systemctl list-timers | grep -E 'docker-prune|podman-prune'
 
 # Manuell ausfuehren
 sudo docker system prune -a --filter "until=168h"
