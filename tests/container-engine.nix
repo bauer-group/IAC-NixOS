@@ -74,8 +74,14 @@ pkgs.testers.nixosTest {
         # Same socket path and same CLI name under either engine
         machine.succeed("docker info")
         machine.succeed("test -S /run/docker.sock")
-        machine.succeed("stat -c %G /run/docker.sock | grep -x docker")
         machine.succeed("docker-compose version")
+
+        # -L on purpose. Under Docker this path is the socket itself, but under
+        # Podman it is a symlink systemd creates through Symlinks=, and a
+        # symlink is owned root:root regardless of the socket behind it. Without
+        # dereferencing, this asserts the group of the wrong inode and fails on
+        # Podman while passing on Docker.
+        machine.succeed("stat -Lc %G /run/docker.sock | grep -x docker")
 
         # IP forwarding, required for container networking
         machine.succeed("sysctl net.ipv4.ip_forward | grep '= 1'")
@@ -94,8 +100,10 @@ pkgs.testers.nixosTest {
     docker.succeed("docker info | grep -i 'storage driver: overlay2'")
     docker.succeed("systemctl list-timers | grep docker-prune")
 
-    # Podman must not have pulled in a Docker daemon
-    podman.fail("systemctl list-unit-files | grep -x 'docker.service.*'")
+    # Podman must not have pulled in a Docker daemon. systemctl cat exits
+    # non-zero on an unknown unit, which is a direct answer; grepping the
+    # unit-file listing depends on its column layout.
+    podman.fail("systemctl cat docker.service")
     podman.succeed("systemctl list-timers | grep podman-prune")
   '';
 }
