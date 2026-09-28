@@ -1,0 +1,46 @@
+name: 🔀 Merge Flake Update
+
+# Merges the weekly flake-update PR once CI (lint + VM tests) is green on it.
+# Machines auto-deploy main at 03:00, so only the exact tree CI tested lands:
+# the PR head must match the tested commit and must not be behind main.
+
+on:
+  workflow_run:
+    workflows: ["🧹 CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    name: 🔀 Auto-merge flake update
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_branch == 'auto/flake-update' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 🔀 Squash-merge the tested head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head auto/flake-update --base main --state open \
+            --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number")
+          if [ -z "$pr" ]; then
+            echo "No open flake-update PR at $HEAD_SHA - nothing to merge."
+            exit 0
+          fi
+
+          behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$HEAD_SHA" --jq .behind_by)
+          if [ "$behind" != "0" ]; then
+            echo "::warning::PR #$pr is $behind commit(s) behind main - CI did not test the merged tree. Update the branch to re-run CI, or wait for next week's refresh."
+            exit 0
+          fi
+
+          gh pr merge "$pr" -R "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD_SHA" \
+            --subject "chore(deps): updated flake inputs" --delete-branch
