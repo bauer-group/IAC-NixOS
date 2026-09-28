@@ -13,6 +13,7 @@ jobs:
   update:
     name: 📦 Update Flake Inputs
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
